@@ -194,7 +194,14 @@ function guideBtn() {
   const b = document.createElement('button'); b.id = 'guideTopBtn'; b.className = 'sm';
   b.style.cssText = 'position:fixed;top:8px;right:8px;width:auto;z-index:10;padding:6px 14px;font-size:0.95rem;background:linear-gradient(#ffe24d,#ffc400);color:#3a1670;border:none;border-radius:10px;font-weight:800;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.2);';
   b.textContent = '📖 Hướng dẫn';
-  b.onclick = showGuideTab;
+  b.addEventListener('click', function () {
+    try {
+      window.showGuideTab();
+    } catch (err) {
+      console.error('[QuizBlast] Không mở được Hướng dẫn:', err);
+      app.innerHTML = '<div class="card"><h2>Không mở được trang Hướng dẫn</h2><p>Vui lòng tải lại trang (Ctrl+F5) và thử lại.</p><button class="ghost" onclick="home()">← Quay lại trang chủ</button></div>';
+    }
+  });
   document.body.appendChild(b);
 }
 
@@ -204,12 +211,9 @@ function removeGuideBtn() {
   if ($('guideTopBtn')) $('guideTopBtn').remove();
 }
 
-function showGuideTab() {
+window.showGuideTab = function showGuideTab() {
   showingGuide = true; // Đánh dấu trang hướng dẫn là màn hình tĩnh
-  stopMusic(); setBg(''); setBrand(null);
-  if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
-  // Không xóa nút hướng dẫn khi mở tab.
-
+  // Render nội dung trước; không để thao tác âm thanh/branding ngăn trang hướng dẫn mở.
   app.innerHTML = `
     <div style="text-align:left">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -314,7 +318,15 @@ function showGuideTab() {
       <button class="ghost" onclick="home()" style="margin-top:10px">← Quay lại trang chủ</button>
     </div>
   `;
-}
+  try {
+    if (typeof stopMusic === 'function') stopMusic();
+    if (typeof setBg === 'function') setBg('');
+    if (typeof setBrand === 'function') setBrand(null);
+    ['snd', 'fsbtn', 'cbtn', 'smod'].forEach(id => { const el = $(id); if (el) el.remove(); });
+  } catch (err) {
+    console.warn('[QuizBlast] Đã mở Hướng dẫn; bỏ qua lỗi dọn giao diện:', err);
+  }
+};
 
 // ---- tiện ích form cài đặt: dùng chung cho form tạo phòng (m=false) và hộp sửa phòng (m=true) ----
 const num = (v, d, lo, hi) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : d; };   // số 0 vẫn được giữ đúng là 0
