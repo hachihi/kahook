@@ -91,6 +91,210 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const h = html => app.innerHTML = html;
 let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], curPin = '', curRoomSettings = null;
 
+const PK = 'qb_profiles';
+let activeProfileId = '';
+function getProfiles() {
+  try {
+    const d = JSON.parse(localStorage[PK] || '[]');
+    return Array.isArray(d) ? d : [];
+  } catch { return []; }
+}
+function putProfiles(arr) {
+  try { localStorage[PK] = JSON.stringify(arr); return true; }
+  catch (e) { showToast('Không lưu được profile (bộ nhớ đầy)', true); return false; }
+}
+function renderProfileOptions(selectedId) {
+  const profs = getProfiles();
+  const opts = [`<option value="">-- Chọn profile đã lưu để áp dụng nhanh --</option>`];
+  profs.forEach(p => {
+    opts.push(`<option value="${esc(p.id)}" ${p.id === selectedId ? 'selected' : ''}>${esc(p.name)} (${esc(p.quizTitle || 'Quiz')})</option>`);
+  });
+  return opts.join('');
+}
+function showToast(msg, isErr = false) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${isErr ? '#e21b3c' : '#26890c'};color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99;box-shadow:0 6px 16px #0004;animation:pop .3s ease-out`;
+  t.innerHTML = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+function askInput(title, defaultValue = '') {
+  return new Promise(resolve => {
+    const d = document.createElement('div');
+    d.className = 'mod';
+    d.innerHTML = `
+      <div class="box" style="max-width:400px;text-align:left;padding:22px;border-radius:18px">
+        <h3 style="margin:0 0 10px;color:var(--p);font-family:'Baloo 2',sans-serif;font-size:1.3rem">${esc(title)}</h3>
+        <input id="promptVal" value="${esc(defaultValue)}" placeholder="Nhập tên profile..." style="margin-bottom:14px">
+        <div style="display:flex;gap:10px">
+          <button id="pOk" style="flex:1">Lưu</button>
+          <button id="pCancel" class="ghost" style="flex:1;color:#555;border-color:#aaa">Hủy</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(d);
+    const inp = d.querySelector('#promptVal');
+    inp.focus(); inp.select();
+    const done = val => { d.remove(); resolve(val); };
+    d.querySelector('#pOk').onclick = () => done(inp.value.trim());
+    d.querySelector('#pCancel').onclick = () => done(null);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') done(inp.value.trim());
+      if (e.key === 'Escape') done(null);
+    });
+  });
+}
+function onSelectProfile(id) {
+  if (!id) {
+    activeProfileId = '';
+    if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
+    if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
+    if ($('profNote')) $('profNote').textContent = '';
+    return;
+  }
+  const profs = getProfiles();
+  const p = profs.find(x => x.id === id);
+  if (p) applyProfile(p);
+}
+function applyProfile(p) {
+  if (!p) return;
+  activeProfileId = p.id;
+  if ($('qz')) {
+    for (let opt of $('qz').options) {
+      if (opt.value === p.quizId) { $('qz').value = p.quizId; break; }
+    }
+  }
+  if ($('au')) $('au').checked = !!p.auto;
+  if ($('sq')) $('sq').checked = !!p.shuffleQ;
+  if ($('sa')) $('sa').checked = p.shuffleA !== false;
+  if ($('wt')) $('wt').value = p.wait ?? 10;
+  if ($('mn')) $('mn').value = p.min ?? 5;
+  if ($('mu')) {
+    $('mu').value = p.music || 'vui';
+    if ($('muf')) $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none';
+  }
+  if ($('vol')) $('vol').value = p.vol ?? 50;
+  bgData = p.bgData || ''; refreshBg();
+  if ($('bt')) $('bt').value = (p.brand && p.brand.title) || '';
+  if ($('bs')) $('bs').value = (p.brand && p.brand.sub) || '';
+  if ($('bc')) $('bc').value = (p.brand && p.brand.color) || '#ffd602';
+  logoData = p.logoData || ''; refreshLogo();
+  try {
+    localStorage.qb_set = JSON.stringify({ music: p.music || 'vui', vol: p.vol ?? 50 });
+    localStorage.qb_brand = JSON.stringify(p.brand || {});
+    localStorage.qb_bg = bgData;
+    localStorage.qb_logo = logoData;
+  } catch {}
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
+  if ($('profNote')) {
+    $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã nạp profile: <b>${esc(p.name)}</b></span> · Bộ câu hỏi: ${esc(p.quizTitle || 'Quiz')} · Chờ: ${p.wait}s · Nhạc: ${p.music}`;
+  }
+  showToast(`✔ Đã nạp Profile "${p.name}"! Tất cả cài đặt đã sẵn sàng.`);
+}
+async function saveAsNewProfile() {
+  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
+  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  if (!name) return;
+  const profs = getProfiles();
+  const newProfile = {
+    id: 'prof_' + Date.now(),
+    name,
+    createdAt: Date.now(),
+    quizId: $('qz') ? $('qz').value : '',
+    quizTitle: currentTitle,
+    auto: $('au') ? $('au').checked : true,
+    shuffleQ: $('sq') ? $('sq').checked : false,
+    shuffleA: $('sa') ? $('sa').checked : true,
+    wait: $('wt') ? Number($('wt').value) || 10 : 10,
+    min: $('mn') ? Number($('mn').value) || 5 : 5,
+    music: $('mu') ? $('mu').value : 'vui',
+    vol: $('vol') ? Number($('vol').value) : 50,
+    bgData: bgData || '',
+    brand: readBrand(),
+    logoData: logoData || ''
+  };
+  profs.unshift(newProfile);
+  putProfiles(profs);
+  activeProfileId = newProfile.id;
+  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions(newProfile.id);
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
+  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã lưu profile mới: <b>${esc(newProfile.name)}</b></span>`;
+  showToast(`✔ Đã lưu Profile "${name}" thành công!`);
+}
+async function updateCurrentProfile() {
+  if (!activeProfileId) return;
+  const profs = getProfiles();
+  const idx = profs.findIndex(p => p.id === activeProfileId);
+  if (idx < 0) return;
+  const current = profs[idx];
+  const ok = await ask(`Cập nhật toàn bộ cài đặt hiện tại vào Profile "<b>${esc(current.name)}</b>"?`, 'Cập nhật', 'Hủy');
+  if (!ok) return;
+  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || current.quizTitle || 'Quiz';
+  profs[idx] = {
+    ...current,
+    quizId: $('qz') ? $('qz').value : current.quizId,
+    quizTitle: currentTitle,
+    auto: $('au') ? $('au').checked : current.auto,
+    shuffleQ: $('sq') ? $('sq').checked : current.shuffleQ,
+    shuffleA: $('sa') ? $('sa').checked : current.shuffleA,
+    wait: $('wt') ? Number($('wt').value) || 10 : current.wait,
+    min: $('mn') ? Number($('mn').value) || 5 : current.min,
+    music: $('mu') ? $('mu').value : current.music,
+    vol: $('vol') ? Number($('vol').value) : current.vol,
+    bgData: bgData || '',
+    brand: readBrand(),
+    logoData: logoData || '',
+    updatedAt: Date.now()
+  };
+  putProfiles(profs);
+  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã cập nhật profile: <b>${esc(current.name)}</b></span>`;
+  showToast(`✔ Đã cập nhật Profile "${current.name}"!`);
+}
+async function deleteCurrentProfile() {
+  if (!activeProfileId) return;
+  const profs = getProfiles();
+  const p = profs.find(x => x.id === activeProfileId);
+  if (!p) return;
+  const ok = await ask(`Bạn có chắc muốn xoá Profile "<b>${esc(p.name)}</b>"?`, 'Xoá Profile', 'Giữ lại');
+  if (!ok) return;
+  const filtered = profs.filter(x => x.id !== activeProfileId);
+  putProfiles(filtered);
+  activeProfileId = '';
+  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions('');
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
+  if ($('profNote')) $('profNote').textContent = 'Đã xoá profile.';
+  showToast(`✔ Đã xoá Profile "${p.name}".`);
+}
+function ensureDefaultProfile(qs) {
+  const profs = getProfiles();
+  if (profs.length === 0 && qs && qs.length) {
+    const firstQ = qs[0];
+    const def = {
+      id: 'prof_default',
+      name: 'Mẫu chuẩn: ' + firstQ.title,
+      createdAt: Date.now(),
+      quizId: firstQ.id,
+      quizTitle: firstQ.title,
+      auto: true,
+      shuffleQ: false,
+      shuffleA: true,
+      wait: 10,
+      min: 5,
+      music: 'vui',
+      vol: 50,
+      bgData: '',
+      brand: { title: '', sub: '', color: '#ffd602' },
+      logoData: ''
+    };
+    profs.push(def);
+    putProfiles(profs);
+  }
+}
+
 function home() {
   role = ''; gameActive = false; stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡</span>Quiz<span>Blast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
   <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
@@ -124,12 +328,28 @@ async function hostMenu(fromLogin) {
   if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
   sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
   const qs = await r.json(); pending = null; cachedQuizzes = qs;
+  ensureDefaultProfile(qs);
   let rr = { enabled: false };
   try { rr = await (await fetch('/api/results', { headers: { 'x-token': tok } })).json(); } catch {}
   const items = rr.enabled ? (rr.items || []).map(x => ({ srv: 1, id: x.id, title: x.title, date: new Date(x.created_at).toLocaleString('vi-VN'), n: x.players }))
     : getRes().map(x => ({ srv: 0, id: x.id, title: x.title, date: x.date, n: x.full.length }));
   const resHtml = `<div class="card"><b>📁 Kết quả đã lưu ${rr.enabled ? '(trên Supabase, xem được từ mọi máy)' : '(trong trình duyệt này)'}</b>${items.length ? items.map(x => `<div class="row" style="margin:6px 0"><span>${esc(x.title)}<br><small>${esc(x.date)} · ${x.n} người</small></span><span><button class="sm" onclick="viewRes(${x.id},${x.srv})">Xem</button> <button class="sm" style="background:#e21b3c" onclick="delRes(${x.id},${x.srv})">Xoá</button></span></div>`).join('') : '<small>Chưa có kết quả nào.</small>'}</div>`;
   h(`<h1>Bảng điều khiển host</h1>
+  <div class="card" style="background:linear-gradient(135deg,#fbf9ff,#f1e9ff);border:2px solid #7b2ff7;box-shadow:0 6px 18px #7b2ff726">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <b style="font-size:1.15rem;color:var(--p);margin:0">⭐ Mẫu cấu hình sẵn (Profile)</b>
+      <span style="font-size:0.85rem;color:#666">Lưu trọn gói: câu hỏi, màn hình, âm thanh, thời gian</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+      <select id="selProfile" style="flex:2;min-width:210px;margin:0" onchange="onSelectProfile(this.value)">
+        ${renderProfileOptions(activeProfileId)}
+      </select>
+      <button type="button" class="sm" onclick="saveAsNewProfile()" style="background:#26890c;white-space:nowrap;margin:0">💾 Lưu làm Profile mới</button>
+      <button type="button" class="sm" id="btnUpdateProf" onclick="updateCurrentProfile()" style="background:#1368ce;white-space:nowrap;margin:0;display:${activeProfileId ? 'inline-block' : 'none'}">✏ Cập nhật</button>
+      <button type="button" class="sm" id="btnDelProf" onclick="deleteCurrentProfile()" style="background:#e21b3c;white-space:nowrap;margin:0;display:${activeProfileId ? 'inline-block' : 'none'}">🗑 Xoá</button>
+    </div>
+    <div id="profNote" style="font-size:0.85rem;color:#555;margin-top:8px"></div>
+  </div>
   <div class="card"><b>1. Chọn bộ câu hỏi</b><select id="qz">${qs.map(q => `<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
   <b>2. Cài đặt qua câu</b>
   <label class="ck"><input type="checkbox" id="au" checked> Tự động qua câu khi hết thời gian chờ</label>
@@ -262,6 +482,16 @@ async function openRoomSettings() {
       <h2 style="margin:0 0 10px;color:var(--p);font-size:1.45rem">⚙ Cài đặt tham số phòng</h2>
       <div style="font-size:0.92rem;color:#666;margin-bottom:12px">Mã phòng: <b style="color:var(--p)">${curPin || ''}</b> · Chưa bắt đầu chơi, bạn có thể chỉnh sửa mọi cài đặt.</div>
       
+      <div style="background:#f4efff;padding:10px 14px;border-radius:12px;margin-bottom:14px;border:1px solid #d4c2fc">
+        <b style="color:var(--p);font-size:0.95rem;display:block;margin-bottom:6px">⭐ Nạp nhanh từ Profile có sẵn:</b>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <select id="m_prof" style="margin:0;padding:8px;flex:2;min-width:180px" onchange="onModalSelectProfile(this.value)">
+            ${renderProfileOptions('')}
+          </select>
+          <button type="button" class="sm" onclick="saveModalAsProfile()" style="background:#26890c;white-space:nowrap;padding:6px 12px;margin:0">💾 Lưu làm Profile</button>
+        </div>
+      </div>
+
       <b style="color:var(--p);display:block;margin:10px 0 4px">1. Bộ câu hỏi</b>
       <select id="m_qz">${(cachedQuizzes || []).map(q => `<option value="${esc(q.id)}" ${q.id === st.id ? 'selected' : ''}>${esc(q.title)}</option>`).join('')}</select>
 
@@ -311,6 +541,61 @@ function previewModalMusic() {
 }
 function closeRoomSettings() {
   if ($('smod')) $('smod').remove();
+}
+function onModalSelectProfile(profId) {
+  if (!profId) return;
+  const p = getProfiles().find(x => x.id === profId);
+  if (!p) return;
+  if ($('m_qz')) {
+    for (let opt of $('m_qz').options) {
+      if (opt.value === p.quizId) { $('m_qz').value = p.quizId; break; }
+    }
+  }
+  if ($('m_au')) $('m_au').checked = !!p.auto;
+  if ($('m_sq')) $('m_sq').checked = !!p.shuffleQ;
+  if ($('m_sa')) $('m_sa').checked = p.shuffleA !== false;
+  if ($('m_wt')) $('m_wt').value = p.wait ?? 10;
+  if ($('m_mn')) $('m_mn').value = p.min ?? 5;
+  if ($('m_mu')) $('m_mu').value = p.music || 'vui';
+  if ($('m_vol')) $('m_vol').value = p.vol ?? 50;
+  if ($('m_bt')) $('m_bt').value = (p.brand && p.brand.title) || '';
+  if ($('m_bs')) $('m_bs').value = (p.brand && p.brand.sub) || '';
+  if ($('m_bc')) $('m_bc').value = (p.brand && p.brand.color) || '#ffd602';
+  if (p.bgData != null) bgData = p.bgData;
+  if (p.logoData != null) logoData = p.logoData;
+  showToast(`✔ Đã nạp Profile "${p.name}" vào bảng sửa! Bấm "Lưu cài đặt" để áp dụng cho phòng.`);
+}
+async function saveModalAsProfile() {
+  const currentTitle = (($('m_qz') && $('m_qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
+  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  if (!name) return;
+  const profs = getProfiles();
+  const newProfile = {
+    id: 'prof_' + Date.now(),
+    name,
+    createdAt: Date.now(),
+    quizId: $('m_qz') ? $('m_qz').value : '',
+    quizTitle: currentTitle,
+    auto: $('m_au') ? $('m_au').checked : true,
+    shuffleQ: $('m_sq') ? $('m_sq').checked : false,
+    shuffleA: $('m_sa') ? $('m_sa').checked : true,
+    wait: $('m_wt') ? Number($('m_wt').value) || 10 : 10,
+    min: $('m_mn') ? Number($('m_mn').value) || 5 : 5,
+    music: $('m_mu') ? $('m_mu').value : 'vui',
+    vol: $('m_vol') ? Number($('m_vol').value) : 50,
+    bgData: bgData || '',
+    brand: {
+      title: $('m_bt') ? $('m_bt').value.trim() : '',
+      sub: $('m_bs') ? $('m_bs').value.trim() : '',
+      color: $('m_bc') ? $('m_bc').value : '#ffd602'
+    },
+    logoData: logoData || ''
+  };
+  profs.unshift(newProfile);
+  putProfiles(profs);
+  if ($('m_prof')) $('m_prof').innerHTML = renderProfileOptions(newProfile.id);
+  showToast(`✔ Đã lưu Profile "${name}" thành công!`);
 }
 async function saveRoomSettings() {
   const qzId = $('m_qz').value;
