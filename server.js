@@ -7,15 +7,81 @@ if (!process.env.HOST_PASS) console.log('HOST_PASS chưa đặt: dùng mật kh�
 app.use(express.json({ limit: '1mb' }));
 
 // ---------- file tĩnh ----------
+// ---------- file tĩnh & âm thanh ----------
 const root = fs.existsSync(path.join(__dirname, 'public', 'index.html')) ? path.join(__dirname, 'public') : __dirname;
-const SND = ['vui', 'hoihop', 'thugian', 'applause'].map(n => n + '.wav');
-const findSound = f => [path.join(root, 'sounds'), root, path.join(__dirname, 'public', 'sounds'), path.join(__dirname, 'sounds'), __dirname]
-  .map(d => path.join(d, f)).find(p => fs.existsSync(p));
-app.get('/sounds/:f', (req, res) => { const p = SND.includes(req.params.f) && findSound(req.params.f); p ? res.sendFile(p) : res.status(404).end(); });
+const soundDirs = [
+  path.join(root, 'sounds'),
+  path.join(root, 'sound'),
+  path.join(__dirname, 'public', 'sounds'),
+  path.join(__dirname, 'public', 'sound'),
+  path.join(__dirname, 'sounds'),
+  path.join(__dirname, 'sound')
+].filter(d => fs.existsSync(d));
+
+function getAvailableSounds() {
+  const map = new Map();
+  const audioExts = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac'];
+  soundDirs.forEach(dir => {
+    try {
+      const files = fs.readdirSync(dir);
+      files.forEach(f => {
+        const ext = path.extname(f).toLowerCase();
+        if (audioExts.includes(ext) && !map.has(f)) {
+          const nameWithoutExt = path.basename(f, ext);
+          let label = f;
+          if (nameWithoutExt === 'vui') label = '🎉 Vui nhộn (vui.wav)';
+          else if (nameWithoutExt === 'hoihop') label = '⏱ Hồi hộp (hoihop.wav)';
+          else if (nameWithoutExt === 'thugian') label = '🌿 Thư giãn (thugian.wav)';
+          else if (nameWithoutExt === 'applause') label = '👏 Tiếng vỗ tay (applause.wav)';
+          else label = `🎵 ${nameWithoutExt} (${ext.slice(1).toUpperCase()})`;
+
+          map.set(f, {
+            filename: f,
+            id: f,
+            name: nameWithoutExt,
+            label,
+            ext,
+            url: `/sounds/${encodeURIComponent(f)}`
+          });
+        }
+      });
+    } catch {}
+  });
+  return Array.from(map.values());
+}
+
+const findSound = f => {
+  const safeName = path.basename(f);
+  for (const dir of soundDirs) {
+    const full = path.join(dir, safeName);
+    if (fs.existsSync(full)) return full;
+  }
+  return null;
+};
+
+app.get(['/sounds/:f', '/sound/:f'], (req, res) => {
+  const p = findSound(req.params.f);
+  p ? res.sendFile(p) : res.status(404).end();
+});
+
+app.get('/api/sounds', (_, res) => {
+  res.json(getAvailableSounds());
+});
+
 app.use(express.static(root));
 app.get('/', (_, res) => res.sendFile(path.join(root, 'index.html')));
-app.get('/api/health', (_, res) => res.json({ index: fs.existsSync(path.join(root, 'index.html')),
-  sounds: Object.fromEntries(SND.map(f => [f, !!findSound(f)])), supabase: !!sb, hostPassSet: !!PASS, rooms: Object.keys(games).length, uptimeSec: Math.round(process.uptime()) }));
+app.get('/api/health', (_, res) => {
+  const sounds = getAvailableSounds();
+  res.json({
+    index: fs.existsSync(path.join(root, 'index.html')),
+    soundCount: sounds.length,
+    sounds: sounds.map(s => s.filename),
+    supabase: !!sb,
+    hostPassSet: !!PASS,
+    rooms: Object.keys(games).length,
+    uptimeSec: Math.round(process.uptime())
+  });
+});
 
 // ---------- Supabase (tuỳ chọn) ----------
 let sb = null;

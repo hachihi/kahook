@@ -89,7 +89,31 @@ const s = io(), $ = id => document.getElementById(id), app = $('app');
 const COL = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'], SYM = ['▲', '◆', '●', '■'];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const h = html => app.innerHTML = html;
-let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], curPin = '', curRoomSettings = null;
+let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], cachedSounds = [], curPin = '', curRoomSettings = null;
+
+async function fetchSounds() {
+  try {
+    const r = await fetch('/api/sounds');
+    if (r.ok) cachedSounds = await r.json();
+  } catch {}
+}
+
+function renderMusicOptions(selectedVal) {
+  let html = `<option value="none" ${selectedVal === 'none' ? 'selected' : ''}>🔇 Không nhạc</option>`;
+  if (cachedSounds && cachedSounds.length) {
+    cachedSounds.forEach(s => {
+      if (s.name === 'applause') return;
+      const isSel = selectedVal === s.filename || selectedVal === s.name || (selectedVal && selectedVal.replace(/\.\w+$/, '') === s.name);
+      html += `<option value="${esc(s.filename)}" ${isSel ? 'selected' : ''}>${esc(s.label || s.filename)}</option>`;
+    });
+  } else {
+    html += `<option value="vui.wav" ${selectedVal === 'vui' || selectedVal === 'vui.wav' ? 'selected' : ''}>🎉 Vui nhộn</option>`;
+    html += `<option value="hoihop.wav" ${selectedVal === 'hoihop' || selectedVal === 'hoihop.wav' ? 'selected' : ''}>⏱ Hồi hộp</option>`;
+    html += `<option value="thugian.wav" ${selectedVal === 'thugian' || selectedVal === 'thugian.wav' ? 'selected' : ''}>🌿 Thư giãn</option>`;
+  }
+  html += `<option value="custom" ${selectedVal === 'custom' ? 'selected' : ''}>📁 Tải file nhạc của bạn…</option>`;
+  return html;
+}
 
 const PK = 'qb_profiles';
 let activeProfileId = '';
@@ -170,7 +194,15 @@ function applyProfile(p) {
   if ($('wt')) $('wt').value = p.wait ?? 10;
   if ($('mn')) $('mn').value = p.min ?? 5;
   if ($('mu')) {
-    $('mu').value = p.music || 'vui';
+    let matched = false;
+    for (let opt of $('mu').options) {
+      if (opt.value === p.music || opt.value.replace(/\.\w+$/, '') === (p.music || '').replace(/\.\w+$/, '')) {
+        $('mu').value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && p.music) $('mu').value = p.music;
     if ($('muf')) $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none';
   }
   if ($('vol')) $('vol').value = p.vol ?? 50;
@@ -328,12 +360,14 @@ async function hostMenu(fromLogin) {
   if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
   sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
   const qs = await r.json(); pending = null; cachedQuizzes = qs;
+  await fetchSounds();
   ensureDefaultProfile(qs);
   let rr = { enabled: false };
   try { rr = await (await fetch('/api/results', { headers: { 'x-token': tok } })).json(); } catch {}
   const items = rr.enabled ? (rr.items || []).map(x => ({ srv: 1, id: x.id, title: x.title, date: new Date(x.created_at).toLocaleString('vi-VN'), n: x.players }))
     : getRes().map(x => ({ srv: 0, id: x.id, title: x.title, date: x.date, n: x.full.length }));
   const resHtml = `<div class="card"><b>📁 Kết quả đã lưu ${rr.enabled ? '(trên Supabase, xem được từ mọi máy)' : '(trong trình duyệt này)'}</b>${items.length ? items.map(x => `<div class="row" style="margin:6px 0"><span>${esc(x.title)}<br><small>${esc(x.date)} · ${x.n} người</small></span><span><button class="sm" onclick="viewRes(${x.id},${x.srv})">Xem</button> <button class="sm" style="background:#e21b3c" onclick="delRes(${x.id},${x.srv})">Xoá</button></span></div>`).join('') : '<small>Chưa có kết quả nào.</small>'}</div>`;
+  const stInit = JSON.parse(localStorage.qb_set || '{}');
   h(`<h1>Bảng điều khiển host</h1>
   <div class="card" style="background:linear-gradient(135deg,#fbf9ff,#f1e9ff);border:2px solid #7b2ff7;box-shadow:0 6px 18px #7b2ff726">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -358,11 +392,11 @@ async function hostMenu(fromLogin) {
   <div>Tối thiểu trước khi bấm qua được (giây)<input id="mn" type="number" value="5" min="0" max="60"></div></div>
   <small>Bỏ chọn tự động = chỉ qua câu khi host bấm nút (sau thời gian tối thiểu).</small>
   <b>3. Nhạc nền &amp; hình nền</b>
-  <select id="mu"><option value="vui">🎉 Vui nhộn</option><option value="hoihop">⏱ Hồi hộp</option><option value="thugian">🌿 Thư giãn</option><option value="none">🔇 Không nhạc</option><option value="custom">📁 Tải file nhạc của bạn…</option></select>
+  <select id="mu">${renderMusicOptions(stInit.music || 'vui.wav')}</select>
   <input type="file" id="muf" accept="audio/*" style="display:none">
   <div class="two"><div>Âm lượng<input type="range" id="vol" min="0" max="100" value="50"></div><div><br><button class="sm" onclick="previewMusic()">▶ Nghe thử / dừng</button></div></div>
   <div>Hình nền (hiện trên cả máy người chơi)<input type="file" id="bgf" accept="image/*" onchange="loadBg(this.files[0])"><small id="bgs"></small></div>
-  <small>Nhạc phát trên máy host (chiếu lên màn hình lớp). File nhạc tự tải lên chỉ dùng cho lần này.</small>
+  <small>Nhạc phát trên máy host. Tự động nạp toàn bộ file MP3/WAV từ thư mục nhạc.</small>
   <b>4. Banner sự kiện (hiện trên mọi màn hình)</b>
   <input id="bt" placeholder="Tên chương trình / sự kiện (VD: HCH EVENT 2026)" maxlength="80">
   <input id="bs" placeholder="Dòng chào (VD: Chào mừng các bạn đến với …)" maxlength="120">
@@ -377,7 +411,14 @@ async function hostMenu(fromLogin) {
   <div id="pv"></div><div id="err" class="er"></div></div>
   <button class="ghost" onclick="home()">Thoát</button>`);
   const st = JSON.parse(localStorage.qb_set || '{}');
-  if (st.music && st.music !== 'custom') $('mu').value = st.music;
+  if (st.music && st.music !== 'custom') {
+    for (let opt of $('mu').options) {
+      if (opt.value === st.music || opt.value.replace(/\.\w+$/, '') === st.music.replace(/\.\w+$/, '')) {
+        $('mu').value = opt.value;
+        break;
+      }
+    }
+  }
   if (st.vol != null) $('vol').value = st.vol;
   $('mu').onchange = () => { $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none'; };
   $('muf').onchange = e => { if (e.target.files[0]) customUrl = URL.createObjectURL(e.target.files[0]); };
@@ -472,6 +513,7 @@ async function openRoomSettings() {
       if (res.ok) cachedQuizzes = await res.json();
     } catch {}
   }
+  if (!cachedSounds || !cachedSounds.length) await fetchSounds();
   if ($('smod')) $('smod').remove();
   const st = curRoomSettings || {};
   const d = document.createElement('div');
@@ -506,10 +548,7 @@ async function openRoomSettings() {
 
       <b style="color:var(--p);display:block;margin:12px 0 4px">3. Nhạc nền &amp; âm lượng</b>
       <select id="m_mu">
-        <option value="vui" ${st.music === 'vui' ? 'selected' : ''}>🎉 Vui nhộn</option>
-        <option value="hoihop" ${st.music === 'hoihop' ? 'selected' : ''}>⏱ Hồi hộp</option>
-        <option value="thugian" ${st.music === 'thugian' ? 'selected' : ''}>🌿 Thư giãn</option>
-        <option value="none" ${st.music === 'none' ? 'selected' : ''}>🔇 Không nhạc</option>
+        ${renderMusicOptions(st.music || 'vui.wav')}
       </select>
       <div class="two">
         <div>Âm lượng<input type="range" id="m_vol" min="0" max="100" value="${st.vol ?? 50}"></div>
@@ -536,7 +575,7 @@ async function openRoomSettings() {
 function previewModalMusic() {
   if (!bgm.paused) return stopMusic();
   const v = $('m_mu').value;
-  const src = v === 'none' ? '' : `/sounds/${v}.wav`;
+  const src = musicSrc(v);
   if (src) startMusic(src, (Number($('m_vol').value) || 50) / 100);
 }
 function closeRoomSettings() {
@@ -629,7 +668,7 @@ async function saveRoomSettings() {
     setBg(bgData);
     stopMusic();
     if (music !== 'none') {
-      const src = music === 'custom' ? customUrl : `/sounds/${music}.wav`;
+      const src = musicSrc(music);
       if (src) startMusic(src, volVal / 100);
     }
     if ($('smod')) $('smod').remove();
@@ -641,7 +680,7 @@ async function saveRoomSettings() {
   });
 }
 function create() {
-  const music = $('mu').value, v = $('vol').value / 100, src = musicSrc();
+  const music = $('mu').value, v = $('vol').value / 100, src = musicSrc(music);
   try { localStorage.qb_set = JSON.stringify({ music, vol: $('vol').value }); } catch {}
   curTitle = (($('qz').selectedOptions[0]) || {}).text || 'Quiz';
   const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color }); } catch {}
@@ -670,8 +709,18 @@ const bgm = new Audio(); bgm.loop = true;
 let muted = false, vol = .5, customUrl = '', bgData = '', curTitle = '', gameActive = false;
 function startMusic(src, v) { vol = v; bgm.src = src; bgm.volume = v; bgm.muted = muted; bgm.play().catch(() => {}); }
 function stopMusic() { bgm.pause(); }
-function musicSrc() { const v = $('mu').value; return v === 'none' ? '' : v === 'custom' ? customUrl : `/sounds/${v}.wav`; }
-function previewMusic() { if (!bgm.paused) return stopMusic(); const src = musicSrc(); if (src) startMusic(src, $('vol').value / 100); }
+function musicSrc(val) {
+  const v = val || ($('mu') ? $('mu').value : '') || ($('m_mu') ? $('m_mu').value : '');
+  if (!v || v === 'none') return '';
+  if (v === 'custom') return customUrl;
+  if (/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(v)) {
+    return `/sounds/${encodeURIComponent(v)}`;
+  }
+  const found = (cachedSounds || []).find(s => s.name === v || s.filename.startsWith(v + '.'));
+  if (found) return found.url;
+  return `/sounds/${encodeURIComponent(v)}.wav`;
+}
+function previewMusic() { if (!bgm.paused) return stopMusic(); const src = musicSrc($('mu') ? $('mu').value : ''); if (src) startMusic(src, ($('vol') ? $('vol').value : 50) / 100); }
 function applause() { const a = new Audio('/sounds/applause.wav'); a.volume = muted ? 0 : Math.min(1, vol + .4); a.play().catch(() => {}); }
 function soundBtn() {
   if ($('snd')) return; const b = document.createElement('button'); b.id = 'snd'; b.className = 'sm';
