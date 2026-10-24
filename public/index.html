@@ -106,7 +106,8 @@ button.ghost{background:#ffffff14;backdrop-filter:blur(4px)}
 const s = io(), $ = id => document.getElementById(id), app = $('app');
 const COL = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'], SYM = ['▲', '◆', '●', '■'];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const h = html => app.innerHTML = html;
+let showingGuide = false; // Tránh sự kiện realtime ghi đè giao diện khi đang đọc hướng dẫn
+const h = html => { if (!showingGuide) app.innerHTML = html; };
 let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], cachedSounds = [], curPin = '', curRoomSettings = null;
 
 async function fetchSounds() {
@@ -198,15 +199,18 @@ function guideBtn() {
 }
 
 function removeGuideBtn() {
+  // Giữ nút trên trang Hướng dẫn; các màn hình chơi khác vẫn xử lý như cũ.
+  if (showingGuide) return;
   if ($('guideTopBtn')) $('guideTopBtn').remove();
 }
 
 function showGuideTab() {
+  showingGuide = true; // Đánh dấu trang hướng dẫn là màn hình tĩnh
   stopMusic(); setBg(''); setBrand(null);
   if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
-  removeGuideBtn();
+  // Không xóa nút hướng dẫn khi mở tab.
 
-  h(`
+  app.innerHTML = `
     <div style="text-align:left">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <button class="ghost" onclick="home()" style="width:auto;padding:8px 16px;margin:0">← Quay lại trang chủ</button>
@@ -309,7 +313,7 @@ function showGuideTab() {
 
       <button class="ghost" onclick="home()" style="margin-top:10px">← Quay lại trang chủ</button>
     </div>
-  `);
+  `;
 }
 
 // ---- tiện ích form cài đặt: dùng chung cho form tạo phòng (m=false) và hộp sửa phòng (m=true) ----
@@ -469,6 +473,7 @@ function ensureDefaultProfile(qs) {
 }
 
 function home() {
+  showingGuide = false; // Rời tab hướng dẫn, khôi phục luồng giao diện bình thường
   role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh');
   guideBtn();
   h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
