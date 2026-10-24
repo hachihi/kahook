@@ -369,7 +369,7 @@ async function hostMenu(fromLogin) {
   try { rr = await (await fetch('/api/results', { headers: { 'x-token': tok } })).json(); } catch {}
   const items = rr.enabled ? (rr.items || []).map(x => ({ srv: 1, id: x.id, title: x.title, date: new Date(x.created_at).toLocaleString('vi-VN'), n: x.players }))
     : getRes().map(x => ({ srv: 0, id: x.id, title: x.title, date: x.date, n: x.full.length }));
-  const resHtml = `<div class="card"><b>📁 Kết quả đã lưu ${rr.enabled ? '(trên Supabase, xem được từ mọi máy)' : '(trong trình duyệt này)'}</b>${items.length ? items.map(x => `<div class="row" style="margin:6px 0"><span>${esc(x.title)}<br><small>${esc(x.date)} · ${x.n} người</small></span><span><button class="sm" onclick="viewRes(${x.id},${x.srv})">Xem</button> <button class="sm" style="background:#e21b3c" onclick="delRes(${x.id},${x.srv})">Xoá</button></span></div>`).join('') : '<small>Chưa có kết quả nào.</small>'}</div>`;
+  const resHtml = `<div class="card"><b>📁 Kết quả đã lưu ${rr.enabled ? '(trên database, xem được từ mọi máy)' : '(trong trình duyệt này)'}</b>${items.length ? items.map(x => `<div class="row" style="margin:6px 0"><span>${esc(x.title)}<br><small>${esc(x.date)} · ${x.n} người</small></span><span><button class="sm" onclick="viewRes(${x.id},${x.srv})">Xem</button> <button class="sm" style="background:#e21b3c" onclick="delRes(${x.id},${x.srv})">Xoá</button></span></div>`).join('') : '<small>Chưa có kết quả nào.</small>'}</div>`;
   const stInit = JSON.parse(localStorage.qb_set || '{}');
   h(`<h1>Bảng điều khiển host</h1>
   <div class="card" style="background:linear-gradient(135deg,#fbf9ff,#f1e9ff);border:2px solid #7b2ff7;box-shadow:0 6px 18px #7b2ff726">
@@ -401,11 +401,12 @@ async function hostMenu(fromLogin) {
   <div>Hình nền (hiện trên cả máy người chơi)<input type="file" id="bgf" accept="image/*" onchange="loadBg(this.files[0])"><small id="bgs"></small></div>
   <small>Nhạc phát trên máy host. Tự động nạp toàn bộ file MP3/WAV từ thư mục nhạc.</small>
   <b>4. Banner sự kiện (hiện trên mọi màn hình)</b>
-  <input id="bt" placeholder="Tên chương trình / sự kiện (VD: HCH EVENT 2026)" maxlength="80">
-  <input id="bs" placeholder="Dòng chào (VD: Chào mừng các bạn đến với …)" maxlength="120">
+ 
+  <input id="bt" value="HACHIHI EVENT " placeholder="Tên chương trình / sự kiện (VD: HCH EVENT 2026)" maxlength="80">
+  <input id="bs" value="Chào mừng các bạn đến với event hachihi.vn" placeholder="Dòng chào (VD: Chào mừng các bạn đến với …)" maxlength="120">
   <div class="two"><div>Màu nhấn<input type="color" id="bc" value="#ffd602" style="height:46px;padding:2px"></div>
   <div>Logo (PNG/JPG, tự thu nhỏ)<input type="file" id="blf" accept="image/*" onchange="loadLogo(this.files[0])"><small id="bls"></small></div></div>
-  <button class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="previewUI()">👁 Xem thử giao diện thực tế (nền + banner)</button>
+  <button class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="previewUI()">👁 Xem thử giao diện thực tế (nền + banner + âm thanh)</button>
   <button onclick="create()">Tạo phòng</button></div>
   ${resHtml}
   <div class="card"><b>Nạp câu hỏi mới</b><small>Cột A: câu hỏi · B,C,D,E: đáp án A,B,C,D · F: đáp án đúng (A/B/C/D) · G (tuỳ chọn): số giây</small>
@@ -824,13 +825,95 @@ async function loadLogo(f) {
   } catch { $('bls').textContent = 'Không đọc được ảnh'; }
 }
 function previewUI() {
-  const d = document.createElement('div'); d.className = 'pvw'; d.style.backgroundImage = bgCss(bgData);
-  d.innerHTML = `<div style="max-width:760px;margin:0 auto">${brandHtml(readBrand())}<h1>Vào bằng PIN</h1><div class="pin">123456</div><div class="big">3 người chơi</div>
-  <span class="chip">An</span><span class="chip">Bình</span><span class="chip">Chi</span>
-  <div class="big" style="margin-top:26px">Câu 1/10 · 20s<br>Thủ đô của Việt Nam?</div>
-  <div class="grid">${['Hà Nội', 'Huế', 'Đà Nẵng', 'TP.HCM'].map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${o}</div>`).join('')}</div>
-  <p style="margin-top:24px;opacity:.85">👆 Bấm vào bất kỳ đâu để đóng xem thử</p></div>`;
-  d.onclick = () => d.remove(); document.body.appendChild(d);
+  const prevPlaying = !bgm.paused;
+  const musicVal = ($('mu') ? $('mu').value : '') || ($('m_mu') ? $('m_mu').value : 'vui.wav');
+  const volVal = (($('vol') ? Number($('vol').value) : ($('m_vol') ? Number($('m_vol').value) : 50))) / 100;
+  const musicName = ($('mu') && $('mu').selectedOptions[0]) ? $('mu').selectedOptions[0].text : (($('m_mu') && $('m_mu').selectedOptions[0]) ? $('m_mu').selectedOptions[0].text : 'Nhạc nền');
+  const src = musicSrc(musicVal);
+
+  if (src && musicVal !== 'none') {
+    startMusic(src, volVal);
+  }
+
+  const d = document.createElement('div');
+  d.className = 'pvw';
+  d.style.backgroundImage = bgCss(bgData);
+  d.innerHTML = `
+    <div style="position:fixed;top:14px;right:16px;z-index:25;display:flex;gap:8px">
+      ${src && musicVal !== 'none' ? `
+        <button id="pvwSndBtn" class="sm" style="background:#000b;color:#fff;border:1px solid #ffffff40;border-radius:12px;padding:8px 14px;cursor:pointer;font-weight:700">
+          ${bgm.muted || bgm.paused ? '🔇 Bật nhạc' : '🔊 Tắt nhạc'}
+        </button>
+      ` : ''}
+      <button id="pvwCloseBtn" class="sm" style="background:#000b;border:2px solid #ff5555;color:#ff8585;border-radius:12px;padding:8px 14px;cursor:pointer;font-weight:700">
+        ✕ Đóng xem thử
+      </button>
+    </div>
+    <div style="max-width:760px;margin:20px auto 40px;position:relative">
+      ${brandHtml(readBrand())}
+      <div style="margin:12px auto;display:inline-flex;align-items:center;gap:8px;background:#0008;padding:6px 18px;border-radius:20px;font-size:0.95rem;border:1px solid #ffffff30">
+        <span>🎵 ${musicVal === 'none' ? 'Không chọn nhạc nền' : 'Đang phát thử: ' + esc(musicName)} (${Math.round(volVal * 100)}%)</span>
+      </div>
+      <h1>Vào bằng PIN</h1>
+      <div class="pin">123456</div>
+      <div class="big">3 người chơi</div>
+      <span class="chip">An</span><span class="chip">Bình</span><span class="chip">Chi</span>
+      <div class="big" style="margin-top:26px">Câu 1/10 · 20s<br>Thủ đô của Việt Nam?</div>
+      <div class="grid">
+        ${['Hà Nội', 'Huế', 'Đà Nẵng', 'TP.HCM'].map((o, i) => `
+          <div class="panel" style="margin:0;background:${COL[i]};cursor:pointer" onclick="vibrateTap(40);event.stopPropagation()">
+            ${SYM[i]} ${o}
+          </div>
+        `).join('')}
+      </div>
+      <p style="margin-top:28px;opacity:.88;font-size:1.05rem">👆 Bấm vào bất kỳ đâu hoặc bấm nút "✕ Đóng xem thử" để thoát</p>
+    </div>
+  `;
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    if (!prevPlaying) {
+      stopMusic();
+    }
+    d.remove();
+    document.removeEventListener('keydown', onKey);
+  };
+
+  const onKey = e => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('keydown', onKey);
+
+  d.onclick = e => {
+    if (e.target.closest('#pvwSndBtn') || e.target.closest('#pvwCloseBtn')) return;
+    close();
+  };
+
+  const sndBtn = d.querySelector('#pvwSndBtn');
+  if (sndBtn) {
+    sndBtn.onclick = e => {
+      e.stopPropagation();
+      if (bgm.paused) {
+        if (src && musicVal !== 'none') startMusic(src, volVal);
+        sndBtn.textContent = '🔊 Tắt nhạc';
+      } else {
+        stopMusic();
+        sndBtn.textContent = '🔇 Bật nhạc';
+      }
+    };
+  }
+
+  const closeBtn = d.querySelector('#pvwCloseBtn');
+  if (closeBtn) {
+    closeBtn.onclick = e => {
+      e.stopPropagation();
+      close();
+    };
+  }
+
+  document.body.appendChild(d);
 }
 function refreshBg() { $('bgs').innerHTML = bgData ? '✔ Đã chọn hình nền · <a href="#" style="color:#1368ce" onclick="clearBg();return false">xoá</a>' : 'Chưa chọn'; }
 function clearBg() { bgData = ''; localStorage.removeItem('qb_bg'); refreshBg(); }
