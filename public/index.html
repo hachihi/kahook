@@ -89,10 +89,10 @@ const s = io(), $ = id => document.getElementById(id), app = $('app');
 const COL = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'], SYM = ['▲', '◆', '●', '■'];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const h = html => app.innerHTML = html;
-let role = '', timer, cur = null, tok = '', pending = null, pendingName = '';
+let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], curPin = '', curRoomSettings = null;
 
 function home() {
-  role = ''; gameActive = false; stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡</span>Quiz<span>Blast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
+  role = ''; gameActive = false; stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡</span>Quiz<span>Blast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
   <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
   <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
   <button class="ghost" onclick="hostLogin()">Tôi là host / giáo viên</button>`);
@@ -122,8 +122,8 @@ async function doLogin() {
 async function hostMenu(fromLogin) {
   const r = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
   if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
-  sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove();
-  const qs = await r.json(); pending = null;
+  sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
+  const qs = await r.json(); pending = null; cachedQuizzes = qs;
   let rr = { enabled: false };
   try { rr = await (await fetch('/api/results', { headers: { 'x-token': tok } })).json(); } catch {}
   const items = rr.enabled ? (rr.items || []).map(x => ({ srv: 1, id: x.id, title: x.title, date: new Date(x.created_at).toLocaleString('vi-VN'), n: x.players }))
@@ -201,14 +201,158 @@ async function save() {
   if (!r.ok) return $('err').textContent = (await r.json()).err; hostMenu();
 }
 function hostLobby(pin) {
-  h(`<div class="sub" style="margin-top:18px">Mở trang này trên điện thoại và nhập mã PIN</div><div class="pin">${pin}</div><div id="pl" class="big">Chưa có ai</div><button onclick="startGame()">Bắt đầu</button>`);
+  curPin = pin;
+  cancelRoomBtn();
+  h(`<div class="sub" style="margin-top:18px">Mở trang này trên điện thoại và nhập mã PIN</div>
+  <div class="pin">${pin}</div>
+  <div id="pl" class="big">Chưa có ai</div>
+  <button onclick="startGame()" style="font-size:1.25rem;padding:15px">▶ Bắt đầu</button>
+  <div class="two" style="margin-top:12px">
+    <button class="ghost" onclick="openRoomSettings()" style="border-color:#ffd602;color:#ffd602;font-size:1.05rem">⚙ Sửa cài đặt</button>
+    <button class="ghost" onclick="cancelRoom()" style="border-color:#ff4d4d;color:#ff8585;font-size:1.05rem">✕ Hủy phòng</button>
+  </div>`);
 }
 function startGame() { s.emit('host:start', r => { if (r && r.err) alert(r.err); }); }
 function hostRejoin(v, silent) {
+  curPin = v.pin;
   s.emit('host:rejoin', { pin: v.pin, htoken: v.htoken, token: tok }, r => {
     if (r.err) { sessionStorage.removeItem('qbh'); role = ''; gameActive = false; if (!silent) return; alert('Không vào lại được phòng: ' + r.err); return hostMenu(); }
-    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
+    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); cancelRoomBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
     if (r.state === 'lobby') hostLobby(v.pin);
+  });
+}
+function cancelRoomBtn() {
+  if ($('cbtn')) return;
+  const b = document.createElement('button'); b.id = 'cbtn'; b.className = 'sm ghost';
+  b.style.cssText = 'position:fixed;top:8px;left:8px;width:auto;z-index:8;padding:6px 12px;font-size:0.92rem;border-color:#ff4d4d;color:#ff8585;background:#000a;border-radius:10px;cursor:pointer;';
+  b.textContent = '✕ Hủy phòng';
+  b.onclick = cancelRoom;
+  document.body.appendChild(b);
+}
+async function cancelRoom() {
+  const confirmed = await ask('Bạn có chắc chắn muốn hủy phòng chơi này không?<br><small style="color:#888;margin-top:6px;display:block">Mã PIN sẽ bị hủy và tất cả người chơi sẽ rời phòng.</small>', 'Đồng ý hủy', 'Giữ lại');
+  if (!confirmed) return;
+  s.emit('host:close', {}, () => {});
+  sessionStorage.removeItem('qbh');
+  gameActive = false;
+  role = '';
+  stopMusic();
+  setBg('');
+  setBrand(null);
+  if ($('snd')) $('snd').remove();
+  if ($('cbtn')) $('cbtn').remove();
+  if ($('smod')) $('smod').remove();
+  hostMenu();
+}
+async function openRoomSettings() {
+  if (role !== 'host') return;
+  if (!cachedQuizzes || !cachedQuizzes.length) {
+    try {
+      const res = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
+      if (res.ok) cachedQuizzes = await res.json();
+    } catch {}
+  }
+  if ($('smod')) $('smod').remove();
+  const st = curRoomSettings || {};
+  const d = document.createElement('div');
+  d.id = 'smod';
+  d.className = 'mod';
+  d.innerHTML = `
+    <div class="box" style="max-width:540px;text-align:left;max-height:85vh;overflow-y:auto;padding:22px;border-radius:18px">
+      <h2 style="margin:0 0 10px;color:var(--p);font-size:1.45rem">⚙ Cài đặt tham số phòng</h2>
+      <div style="font-size:0.92rem;color:#666;margin-bottom:12px">Mã phòng: <b style="color:var(--p)">${curPin || ''}</b> · Chưa bắt đầu chơi, bạn có thể chỉnh sửa mọi cài đặt.</div>
+      
+      <b style="color:var(--p);display:block;margin:10px 0 4px">1. Bộ câu hỏi</b>
+      <select id="m_qz">${(cachedQuizzes || []).map(q => `<option value="${esc(q.id)}" ${q.id === st.id ? 'selected' : ''}>${esc(q.title)}</option>`).join('')}</select>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">2. Cách chuyển câu &amp; xáo trộn</b>
+      <label class="ck"><input type="checkbox" id="m_au" ${st.auto ? 'checked' : ''}> Tự động qua câu khi hết thời gian chờ</label>
+      <label class="ck"><input type="checkbox" id="m_sq" ${st.shuffleQ ? 'checked' : ''}> Xáo trộn thứ tự câu hỏi</label>
+      <label class="ck"><input type="checkbox" id="m_sa" ${st.shuffleA !== false ? 'checked' : ''}> Xáo trộn vị trí đáp án</label>
+      <div class="two">
+        <div>Thời gian chờ (giây)<input id="m_wt" type="number" value="${st.wait ?? 10}" min="0" max="120"></div>
+        <div>Tối thiểu trước khi qua (giây)<input id="m_mn" type="number" value="${st.min ?? 5}" min="0" max="60"></div>
+      </div>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">3. Nhạc nền &amp; âm lượng</b>
+      <select id="m_mu">
+        <option value="vui" ${st.music === 'vui' ? 'selected' : ''}>🎉 Vui nhộn</option>
+        <option value="hoihop" ${st.music === 'hoihop' ? 'selected' : ''}>⏱ Hồi hộp</option>
+        <option value="thugian" ${st.music === 'thugian' ? 'selected' : ''}>🌿 Thư giãn</option>
+        <option value="none" ${st.music === 'none' ? 'selected' : ''}>🔇 Không nhạc</option>
+      </select>
+      <div class="two">
+        <div>Âm lượng<input type="range" id="m_vol" min="0" max="100" value="${st.vol ?? 50}"></div>
+        <div><br><button type="button" class="sm" onclick="previewModalMusic()">▶ Nghe thử / dừng</button></div>
+      </div>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">4. Banner sự kiện</b>
+      <input id="m_bt" placeholder="Tên chương trình / sự kiện" maxlength="80" value="${esc((st.brand && st.brand.title) || '')}">
+      <input id="m_bs" placeholder="Dòng chào" maxlength="120" value="${esc((st.brand && st.brand.sub) || '')}">
+      <div class="two">
+        <div>Màu nhấn<input type="color" id="m_bc" value="${(st.brand && st.brand.color) || '#ffd602'}" style="height:42px;padding:2px"></div>
+        <div>Hình nền<input type="file" accept="image/*" onchange="loadBg(this.files[0])"></div>
+      </div>
+
+      <div id="m_err" class="er" style="margin-top:8px"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button onclick="saveRoomSettings()" style="flex:1">💾 Lưu cài đặt</button>
+        <button class="ghost" onclick="closeRoomSettings()" style="flex:1;color:#555;border-color:#aaa">Đóng</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(d);
+}
+function previewModalMusic() {
+  if (!bgm.paused) return stopMusic();
+  const v = $('m_mu').value;
+  const src = v === 'none' ? '' : `/sounds/${v}.wav`;
+  if (src) startMusic(src, (Number($('m_vol').value) || 50) / 100);
+}
+function closeRoomSettings() {
+  if ($('smod')) $('smod').remove();
+}
+async function saveRoomSettings() {
+  const qzId = $('m_qz').value;
+  const auto = $('m_au').checked;
+  const shuffleQ = $('m_sq').checked;
+  const shuffleA = $('m_sa').checked;
+  const wait = Number($('m_wt').value);
+  const min = Number($('m_mn').value);
+  const music = $('m_mu').value;
+  const volVal = Number($('m_vol').value);
+  const brand = {
+    title: $('m_bt').value.trim(),
+    sub: $('m_bs').value.trim(),
+    color: $('m_bc').value,
+    logo: logoData
+  };
+  const payload = { id: qzId, auto, shuffleQ, shuffleA, wait, min, brand, bg: bgData };
+  s.emit('host:update_settings', payload, r => {
+    if (r && r.err) {
+      if ($('m_err')) $('m_err').textContent = r.err;
+      return;
+    }
+    const qzTitle = (($('m_qz').selectedOptions[0]) || {}).text || curTitle;
+    curTitle = qzTitle;
+    curRoomSettings = { id: qzId, title: qzTitle, auto, shuffleQ, shuffleA, wait, min, music, vol: volVal, bg: bgData, brand };
+    try {
+      localStorage.qb_set = JSON.stringify({ music, vol: volVal });
+      localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color });
+    } catch {}
+    setBrand(brand);
+    setBg(bgData);
+    stopMusic();
+    if (music !== 'none') {
+      const src = music === 'custom' ? customUrl : `/sounds/${music}.wav`;
+      if (src) startMusic(src, volVal / 100);
+    }
+    if ($('smod')) $('smod').remove();
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#26890c;color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99;box-shadow:0 6px 16px #0004';
+    toast.textContent = '✔ Đã cập nhật cài đặt phòng!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
   });
 }
 function create() {
@@ -216,9 +360,22 @@ function create() {
   try { localStorage.qb_set = JSON.stringify({ music, vol: $('vol').value }); } catch {}
   curTitle = (($('qz').selectedOptions[0]) || {}).text || 'Quiz';
   const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color }); } catch {}
+  curRoomSettings = {
+    id: $('qz').value,
+    title: curTitle,
+    auto: $('au').checked,
+    shuffleQ: $('sq').checked,
+    shuffleA: $('sa').checked,
+    wait: Number($('wt').value),
+    min: Number($('mn').value),
+    music,
+    vol: $('vol').value,
+    bg: bgData,
+    brand
+  };
   s.emit('host:create', { token: tok, id: $('qz').value, auto: $('au').checked, shuffleQ: $('sq').checked, shuffleA: $('sa').checked, wait: $('wt').value, min: $('mn').value, bg: bgData, brand }, r => {
     if (r.err) { alert(r.err); if (/phiên/.test(r.err)) hostLogin(); return; }
-    role = 'host'; gameActive = true; muted = false;
+    role = 'host'; gameActive = true; muted = false; curPin = r.pin;
     sessionStorage.qbh = JSON.stringify({ pin: r.pin, htoken: r.htoken, title: curTitle, bg: !!bgData });
     setBg(bgData); setBrand(brand); stopMusic(); if (src) startMusic(src, v); soundBtn(); hostLobby(r.pin);
   });
@@ -248,6 +405,7 @@ const brandHtml = b => {
 const setBrand = b => { const e = $('brand'); if (e) e.innerHTML = brandHtml(b); };
 const readBrand = () => ({ title: $('bt').value.trim(), sub: $('bs').value.trim(), color: $('bc').value, logo: logoData });
 s.on('brand', b => setBrand(b));
+s.on('host:settings', d => { if (d) { curRoomSettings = { ...(curRoomSettings || {}), ...d }; if (d.title) curTitle = d.title; } });
 function refreshLogo() { $('bls').innerHTML = logoData ? '✔ Đã chọn logo · <a href="#" style="color:#1368ce" onclick="clearLogo();return false">xoá</a>' : 'Chưa chọn'; }
 function clearLogo() { logoData = ''; localStorage.removeItem('qb_logo'); refreshLogo(); }
 async function loadLogo(f) {

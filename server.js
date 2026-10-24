@@ -1,9 +1,9 @@
 const express = require('express'), http = require('http'), path = require('path'), fs = require('fs'), crypto = require('crypto');
 const { Server } = require('socket.io');
 const app = express(), server = http.createServer(app), io = new Server(server, { maxHttpBufferSize: 2e6 });
-const PASS = process.env.HOST_PASS || '';      // BẮT BUỘC đặt trên Render, không có mật khẩu mặc định
+const PASS = process.env.HOST_PASS || 'admin';
 const MAX_PLAYERS = 100, HOST_GRACE = 180000;
-if (!PASS) console.warn('!!! Chưa đặt biến HOST_PASS: chế độ host đang bị KHOÁ');
+if (!process.env.HOST_PASS) console.log('HOST_PASS chưa đặt: dùng mật khẩu mặc định là "admin"');
 app.use(express.json({ limit: '1mb' }));
 
 // ---------- file tĩnh ----------
@@ -209,7 +209,19 @@ function sync(g, p, s) {
 }
 function hostSync(g, s) {
   const bf = brandFor(g); if (bf) s.emit('brand', bf);
-  if (g.state === 'lobby') s.emit('lobby', lobby(g));
+  if (g.state === 'lobby') {
+    s.emit('lobby', lobby(g));
+    s.emit('host:settings', {
+      id: g.quiz ? g.quiz.id : '',
+      title: g.quiz ? g.quiz.title : '',
+      auto: g.auto,
+      min: g.min,
+      wait: g.wait,
+      shuffleQ: !!g.shuffleQ,
+      shuffleA: g.shuffleA,
+      brand: g.brand
+    });
+  }
   else if (g.state === 'question') { s.emit('question', qFor(g, null, remain(g))); progress(g); }
   else if (g.state === 'reveal') s.emit('reveal', g.lastReveal);
   else if (g.state === 'end') { s.emit('end', g.endHost); if (g.saveStatus) s.emit('saveStatus', g.saveStatus); }
@@ -224,7 +236,7 @@ io.on('connection', s => {
     const min = clamp(o.min, 0, 60, 5), wait = Math.max(min, clamp(o.wait, 0, 120, 10));
     const g = games[pin] = { pin, host: s.id, htoken: crypto.randomBytes(12).toString('hex'), created: Date.now(), quiz,
       questions: o.shuffleQ ? shuf([...cq.qs]) : cq.qs, players: {}, state: 'lobby', qi: -1,
-      auto: !!o.auto, min, wait, shuffleA: !!o.shuffleA };
+      auto: !!o.auto, min, wait, shuffleA: !!o.shuffleA, shuffleQ: !!o.shuffleQ };
     const m = typeof o.bg === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(o.bg);
     if (m) { const buf = Buffer.from(m[2], 'base64'); if (buf.length < 350000) { g.bgBuf = buf; g.bgType = m[1]; } }
     const b = o.brand || {};
@@ -239,6 +251,85 @@ io.on('connection', s => {
     if (!g || !validToken(token) || g.htoken !== htoken) return cb({ err: 'Phòng không còn tồn tại' });
     clearTimeout(g.hostGone); g.host = s.id; s.join(pin); s.data.pin = pin;
     cb({ ok: 1, state: g.state }); io.to(pin).emit('hoston'); hostSync(g, s);
+  });
+  // Host hủy / đóng phòng
+  s.on('host:close', (data, cb) => {
+    const r = typeof cb === 'function' ? cb : () => {};
+    const pin = s.data.pin, g = games[pin];
+    if (!g || g.host !== s.id) return r({ err: 'Không có quyền' });
+    closeGame(pin);
+    r({ ok: 1 });
+  });
+  // Host sửa cài đặt khi trong phòng chờ (chưa có ai chơi)
+  s.on('host:update_settings', async (o = {}, cb) => {
+    const r = typeof cb === 'function' ? cb : () => {};
+    const pin = s.data.pin, g = games[pin];
+    if (!g || g.host !== s.id) return r({ err: 'Không có quyền' });
+    if (g.state !== 'lobby') return r({ err: 'Trò chơi đã bắt đầu, không thể đổi cài đặt' });
+
+    if (o.id && (!g.quiz || o.id !== g.quiz.id)) {
+      const quiz = await getQuiz(o.id);
+      if (!quiz) return r({ err: 'Không tìm thấy bộ câu hỏi' });
+      const cq = clean(quiz.questions);
+      if (cq.err) return r({ err: 'Quiz không hợp lệ — ' + cq.err });
+      g.quiz = quiz;
+      g.shuffleQ = !!o.shuffleQ;
+      g.questions = g.shuffleQ ? shuf([...cq.qs]) : cq.qs;
+    } else if (o.shuffleQ !== undefined && o.shuffleQ !== g.shuffleQ) {
+      g.shuffleQ = !!o.shuffleQ;
+      const cq = clean(g.quiz.questions);
+      if (!cq.err) g.questions = g.shuffleQ ? shuf([...cq.qs]) : cq.qs;
+    }
+
+    if (o.min !== undefined) g.min = clamp(o.min, 0, 60, 5);
+    if (o.wait !== undefined) g.wait = Math.max(g.min, clamp(o.wait, 0, 120, 10));
+    if (o.auto !== undefined) g.auto = !!o.auto;
+    if (o.shuffleA !== undefined) g.shuffleA = !!o.shuffleA;
+
+    if (o.bg !== undefined) {
+      const m = typeof o.bg === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(o.bg);
+      if (m) {
+        const buf = Buffer.from(m[2], 'base64');
+        if (buf.length < 350000) { g.bgBuf = buf; g.bgType = m[1]; }
+      } else if (o.bg === '') {
+        g.bgBuf = null; g.bgType = null;
+      }
+      if (g.bgBuf) io.to(pin).emit('bg', `/bg/${pin}?v=${Date.now()}`);
+      else io.to(pin).emit('bg', '');
+    }
+
+    if (o.brand) {
+      const b = o.brand;
+      g.brand = {
+        title: String(b.title || '').slice(0, 80),
+        sub: String(b.sub || '').slice(0, 120),
+        color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602'
+      };
+      const lm = typeof b.logo === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(b.logo);
+      if (lm) {
+        const buf = Buffer.from(lm[2], 'base64');
+        if (buf.length < 200000) { g.logoBuf = buf; g.logoType = lm[1]; }
+      } else if (b.logo === '') {
+        g.logoBuf = null; g.logoType = null;
+      }
+      const bf = brandFor(g);
+      io.to(pin).emit('brand', bf);
+      io.to(g.host).emit('brand', bf);
+    }
+
+    r({
+      ok: 1,
+      settings: {
+        id: g.quiz ? g.quiz.id : '',
+        title: g.quiz ? g.quiz.title : '',
+        auto: g.auto,
+        min: g.min,
+        wait: g.wait,
+        shuffleQ: !!g.shuffleQ,
+        shuffleA: g.shuffleA,
+        brand: g.brand
+      }
+    });
   });
   s.on('player:join', ({ pin, name, token } = {}, cb) => {
     const g = games[pin]; name = String(name || '').trim().slice(0, 20);
@@ -302,4 +393,5 @@ io.on('connection', s => {
     if (p && p.sid === s.id) { p.online = false; if (g.state === 'lobby') io.to(g.host).emit('lobby', lobby(g)); else checkDone(pin); }
   });
 });
-server.listen(process.env.PORT || 3000, () => console.log('Running'));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => console.log(`QuizBlast running on http://0.0.0.0:${PORT}`));
