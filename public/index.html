@@ -1247,7 +1247,7 @@ s.on('result', r => {
   const tk = () => { if (!$('pn')) return clearInterval(timer); $('pn').textContent = left0 == null ? 'Chờ host chuyển câu…' : `${lab} ${Math.max(Math.ceil(left0 - (Date.now() - t0) / 1000), 0)}s`; };
   tk(); timer = setInterval(tk, 500);
 });
-s.on('saveStatus', d => { const e = $('sv'); if (e) { e.style.color = d.ok ? '#9f9' : '#ffd602'; e.textContent = d.ok ? '✔ Đã lưu lên Supabase' : `⚠ Chưa lưu được lên Supabase (${d.msg}). Hệ thống đang thử lại; kết quả vẫn có trong trình duyệt.`; } });
+s.on('saveStatus', d => { const e = $('sv'); if (e) { e.style.color = d.ok ? '#9f9' : '#ffd602'; e.textContent = d.ok ? '✔ Đã lưu data' : `⚠ Chưa lưu được lên Supabase (${d.msg}). Hệ thống đang thử lại; kết quả vẫn có trong trình duyệt.`; } });
 let lastEnd = null;
 function showEnd(d, saved, meta) {
   h(`<h1>🏆 Kết quả</h1>${meta ? `<div>${esc(meta.title)} · ${esc(meta.date)}</div>` : ''}${board(d.full || d.top)}${d.full && !saved ? '<div id="sl" class="er"></div><div id="sv" class="er"></div>' : ''}` +
