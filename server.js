@@ -208,7 +208,7 @@ const clamp = (v, a, b, d) => { v = Number(v); return Number.isFinite(v) ? Math.
 const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const plist = g => Object.values(g.players);
 const top = (g, n) => plist(g).sort((a, b) => b.score - a.score).slice(0, n).map(p => ({ name: p.name, score: p.score }));
-const brandFor = g => (g.brand && (g.brand.title || g.brand.sub || g.logoBuf)) ? { ...g.brand, logo: g.logoBuf ? `/logo/${g.pin}?v=${g.created}` : '' } : null;
+const brandFor = g => (g.brand && (g.brand.title || g.brand.sub || g.logoBuf)) ? { ...g.brand, logo: g.logoBuf ? `/logo/${g.pin}?v=${g.ver || g.created}` : '' } : null;
 const lobby = g => plist(g).map(p => ({ key: p.key, name: p.name, online: p.online }));
 const qFor = (g, p, time) => {
   const q = g.questions[g.qi], perm = p ? p.perm : q.options.map((_, i) => i);
@@ -273,20 +273,14 @@ function sync(g, p, s) {
   else if (g.state === 'reveal' && p.lastResult) s.emit('result', { ...p.lastResult, left: g.auto ? Math.max(0, Math.ceil(g.wait - (Date.now() - g.revealAt) / 1000)) : null });
   else if (g.state === 'end') s.emit('end', { top: g.finalTop });
 }
+const settingsOf = g => ({ id: g.quiz ? g.quiz.id : '', title: g.quiz ? g.quiz.title : '', auto: g.auto, min: g.min, wait: g.wait,
+  shuffleQ: !!g.shuffleQ, shuffleA: !!g.shuffleA, brand: g.brand, hasBg: !!g.bgBuf, hasLogo: !!g.logoBuf });
 function hostSync(g, s) {
   const bf = brandFor(g); if (bf) s.emit('brand', bf);
+  if (g.bgBuf) s.emit('bg', `/bg/${g.pin}?v=${g.ver || g.created}`);   // host refresh trang vẫn thấy lại hình nền
   if (g.state === 'lobby') {
     s.emit('lobby', lobby(g));
-    s.emit('host:settings', {
-      id: g.quiz ? g.quiz.id : '',
-      title: g.quiz ? g.quiz.title : '',
-      auto: g.auto,
-      min: g.min,
-      wait: g.wait,
-      shuffleQ: !!g.shuffleQ,
-      shuffleA: g.shuffleA,
-      brand: g.brand
-    });
+    s.emit('host:settings', settingsOf(g));
   }
   else if (g.state === 'question') { s.emit('question', qFor(g, null, remain(g))); progress(g); }
   else if (g.state === 'reveal') s.emit('reveal', g.lastReveal);
@@ -300,7 +294,7 @@ io.on('connection', s => {
     const cq = clean(quiz.questions); if (cq.err) return cb({ err: 'Quiz không hợp lệ — ' + cq.err });
     let pin; do pin = String(Math.floor(100000 + Math.random() * 900000)); while (games[pin]);
     const min = clamp(o.min, 0, 60, 5), wait = Math.max(min, clamp(o.wait, 0, 120, 10));
-    const g = games[pin] = { pin, host: s.id, htoken: crypto.randomBytes(12).toString('hex'), created: Date.now(), quiz,
+    const g = games[pin] = { pin, host: s.id, htoken: crypto.randomBytes(12).toString('hex'), created: Date.now(), ver: Date.now(), quiz,
       questions: o.shuffleQ ? shuf([...cq.qs]) : cq.qs, players: {}, state: 'lobby', qi: -1,
       auto: !!o.auto, min, wait, shuffleA: !!o.shuffleA, shuffleQ: !!o.shuffleQ };
     const m = typeof o.bg === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(o.bg);
@@ -318,84 +312,60 @@ io.on('connection', s => {
     clearTimeout(g.hostGone); g.host = s.id; s.join(pin); s.data.pin = pin;
     cb({ ok: 1, state: g.state }); io.to(pin).emit('hoston'); hostSync(g, s);
   });
-  // Host hủy / đóng phòng
+  // Host hủy phòng: host rời phòng TRƯỚC rồi mới đóng, để host không nhận lại sự kiện 'closed' (không bị đá về trang chủ)
   s.on('host:close', (data, cb) => {
     const r = typeof cb === 'function' ? cb : () => {};
     const pin = s.data.pin, g = games[pin];
     if (!g || g.host !== s.id) return r({ err: 'Không có quyền' });
-    closeGame(pin);
+    s.leave(pin); s.data.pin = null;
+    io.to(pin).emit('closed', 'cancel'); io.in(pin).socketsLeave(pin);
+    closeGame(pin, true);
     r({ ok: 1 });
   });
-  // Host sửa cài đặt khi trong phòng chờ (chưa có ai chơi)
+  // Host sửa cài đặt: được khi phòng còn ở trạng thái chờ (kể cả đã có người vào), KHÔNG được khi đã bắt đầu chơi
+  const IMGRE = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/;
+  const readImg = (v, max) => { const m = typeof v === 'string' && IMGRE.exec(v); if (!m) return null; const buf = Buffer.from(m[2], 'base64'); return buf.length < max ? { buf, type: m[1] } : null; };
   s.on('host:update_settings', async (o = {}, cb) => {
     const r = typeof cb === 'function' ? cb : () => {};
     const pin = s.data.pin, g = games[pin];
     if (!g || g.host !== s.id) return r({ err: 'Không có quyền' });
-    if (g.state !== 'lobby') return r({ err: 'Trò chơi đã bắt đầu, không thể đổi cài đặt' });
+    const locked = () => games[pin] !== g ? 'Phòng không còn tồn tại' : g.state !== 'lobby' ? 'Trò chơi đã bắt đầu, không thể đổi cài đặt' : '';
+    let e = locked(); if (e) return r({ err: e });
 
-    if (o.id && (!g.quiz || o.id !== g.quiz.id)) {
-      const quiz = await getQuiz(o.id);
+    // Bước 1: chuẩn bị + kiểm tra mọi thứ (chưa đụng vào phòng)
+    let newQuiz = null, newQs = null;
+    if (o.id && (!g.quiz || String(o.id) !== String(g.quiz.id))) {
+      const quiz = await getQuiz(o.id);                       // có thể mất thời gian khi gọi Supabase
       if (!quiz) return r({ err: 'Không tìm thấy bộ câu hỏi' });
       const cq = clean(quiz.questions);
       if (cq.err) return r({ err: 'Quiz không hợp lệ — ' + cq.err });
-      g.quiz = quiz;
-      g.shuffleQ = !!o.shuffleQ;
-      g.questions = g.shuffleQ ? shuf([...cq.qs]) : cq.qs;
-    } else if (o.shuffleQ !== undefined && o.shuffleQ !== g.shuffleQ) {
-      g.shuffleQ = !!o.shuffleQ;
-      const cq = clean(g.quiz.questions);
-      if (!cq.err) g.questions = g.shuffleQ ? shuf([...cq.qs]) : cq.qs;
+      newQuiz = quiz; newQs = cq.qs;
     }
+    let bg, logo;                                             // undefined = giữ nguyên · null = xoá · {buf,type} = ảnh mới
+    if (o.bg !== undefined) { if (o.bg === '') bg = null; else if (!(bg = readImg(o.bg, 350000))) return r({ err: 'Hình nền không hợp lệ hoặc quá lớn' }); }
+    const b = o.brand && typeof o.brand === 'object' ? o.brand : null;
+    if (b && b.logo !== undefined) { if (b.logo === '') logo = null; else if (!(logo = readImg(b.logo, 200000))) return r({ err: 'Logo không hợp lệ hoặc quá lớn' }); }
 
-    if (o.min !== undefined) g.min = clamp(o.min, 0, 60, 5);
-    if (o.wait !== undefined) g.wait = Math.max(g.min, clamp(o.wait, 0, 120, 10));
+    // Bước 2: kiểm tra lại sau khi chờ — nếu host đã bấm Bắt đầu trong lúc đó thì KHÔNG được đổi gì nữa
+    e = locked(); if (e) return r({ err: e });
+
+    // Bước 3: áp dụng (đồng bộ, không có await nên không ai chen vào được)
+    const sq = o.shuffleQ !== undefined ? !!o.shuffleQ : !!g.shuffleQ;
+    if (newQuiz) { g.quiz = newQuiz; g.shuffleQ = sq; g.questions = sq ? shuf([...newQs]) : newQs; }
+    else if (sq !== !!g.shuffleQ) { g.shuffleQ = sq; const cq = clean(g.quiz.questions); if (!cq.err) g.questions = sq ? shuf([...cq.qs]) : cq.qs; }
+    const min = o.min !== undefined ? clamp(o.min, 0, 60, g.min) : g.min;
+    g.min = min; g.wait = Math.max(min, o.wait !== undefined ? clamp(o.wait, 0, 120, g.wait) : g.wait);
     if (o.auto !== undefined) g.auto = !!o.auto;
     if (o.shuffleA !== undefined) g.shuffleA = !!o.shuffleA;
-
-    if (o.bg !== undefined) {
-      const m = typeof o.bg === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(o.bg);
-      if (m) {
-        const buf = Buffer.from(m[2], 'base64');
-        if (buf.length < 350000) { g.bgBuf = buf; g.bgType = m[1]; }
-      } else if (o.bg === '') {
-        g.bgBuf = null; g.bgType = null;
-      }
-      if (g.bgBuf) io.to(pin).emit('bg', `/bg/${pin}?v=${Date.now()}`);
-      else io.to(pin).emit('bg', '');
+    if (bg !== undefined) { g.bgBuf = bg ? bg.buf : null; g.bgType = bg ? bg.type : null; }
+    if (b) {
+      g.brand = { title: String(b.title || '').slice(0, 80), sub: String(b.sub || '').slice(0, 120), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602' };
+      if (logo !== undefined) { g.logoBuf = logo ? logo.buf : null; g.logoType = logo ? logo.type : null; }
     }
-
-    if (o.brand) {
-      const b = o.brand;
-      g.brand = {
-        title: String(b.title || '').slice(0, 80),
-        sub: String(b.sub || '').slice(0, 120),
-        color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602'
-      };
-      const lm = typeof b.logo === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(b.logo);
-      if (lm) {
-        const buf = Buffer.from(lm[2], 'base64');
-        if (buf.length < 200000) { g.logoBuf = buf; g.logoType = lm[1]; }
-      } else if (b.logo === '') {
-        g.logoBuf = null; g.logoType = null;
-      }
-      const bf = brandFor(g);
-      io.to(pin).emit('brand', bf);
-      io.to(g.host).emit('brand', bf);
-    }
-
-    r({
-      ok: 1,
-      settings: {
-        id: g.quiz ? g.quiz.id : '',
-        title: g.quiz ? g.quiz.title : '',
-        auto: g.auto,
-        min: g.min,
-        wait: g.wait,
-        shuffleQ: !!g.shuffleQ,
-        shuffleA: g.shuffleA,
-        brand: g.brand
-      }
-    });
+    if (bg !== undefined || logo !== undefined) g.ver = Date.now();
+    if (bg !== undefined) io.to(pin).emit('bg', g.bgBuf ? `/bg/${pin}?v=${g.ver}` : '');
+    if (b) io.to(pin).emit('brand', brandFor(g));
+    r({ ok: 1, settings: settingsOf(g) });
   });
   s.on('player:join', ({ pin, name, token } = {}, cb) => {
     const g = games[pin]; name = String(name || '').trim().slice(0, 20);
@@ -416,7 +386,7 @@ io.on('connection', s => {
     io.to(g.host).emit('lobby', lobby(g));
     cb({ ok: 1, token: p.token, name: p.name, state: g.state });
     const bf = brandFor(g); if (bf) s.emit('brand', bf);
-    if (g.bgBuf) s.emit('bg', `/bg/${pin}?v=${g.created}`);
+    if (g.bgBuf) s.emit('bg', `/bg/${pin}?v=${g.ver || g.created}`);
     if (g.state !== 'lobby') { sync(g, p, s); progress(g); }
   });
   s.on('host:kick', key => {
