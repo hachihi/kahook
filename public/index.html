@@ -1,7 +1,8 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>QuizBlast</title>
+<meta name="description" content="QuizBlast - Đố vui, thi đua, bứt phá. Trò chơi trắc nghiệm tương tác thời gian thực.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo 2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#46178f;color:#fff;min-height:100vh;display:flex;justify-content:center}
 main{width:100%;max-width:760px;padding:20px;text-align:center}h1{font-size:2.4rem;margin:.6em 0}
@@ -11,6 +12,8 @@ button{background:#1368ce;color:#fff;border:0;border-radius:8px;padding:14px 20p
 button.ghost{background:transparent;border:2px solid #fff}button.sm{width:auto;padding:8px 14px}
 .pin{font-size:4rem;font-weight:900;letter-spacing:.15em;background:#fff;color:#46178f;border-radius:12px;padding:10px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.grid button{height:110px;font-size:1.2rem;margin:0}
+.ans-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s ease,filter .12s}
+.ans-btn:active{transform:scale(0.96) translateY(2px)!important;filter:brightness(1.15)!important}
 .big{font-size:1.6rem;font-weight:700;margin:16px 0}.chip{display:inline-block;background:#fff3;border-radius:20px;padding:6px 14px;margin:4px}
 .row{display:flex;justify-content:space-between;background:#fff;color:#222;border-radius:8px;padding:10px 14px;margin:6px 0}
 .bar{display:inline-block;height:14px;background:#fff;border-radius:7px;vertical-align:middle}.dim{opacity:.35}
@@ -328,10 +331,10 @@ function ensureDefaultProfile(qs) {
 }
 
 function home() {
-  role = ''; gameActive = false; stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡</span>Quiz<span>Blast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
+  role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
   <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
   <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
-  <button class="ghost" onclick="hostLogin()">Tôi là host / giáo viên</button>`);
+  <button class="ghost" onclick="hostLogin()">Tôi là host </button>`);
 }
 function join() { doJoin($('pin').value.trim(), $('nm').value, '', false); }
 function doJoin(pin, name, token, silent) {
@@ -358,7 +361,7 @@ async function doLogin() {
 async function hostMenu(fromLogin) {
   const r = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
   if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
-  sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
+  sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
   const qs = await r.json(); pending = null; cachedQuizzes = qs;
   await fetchSounds();
   ensureDefaultProfile(qs);
@@ -464,11 +467,17 @@ async function save() {
 function hostLobby(pin) {
   curPin = pin;
   cancelRoomBtn();
+  fullscreenBtn();
+  const isFs = isFullScreen();
   h(`<div class="sub" style="margin-top:18px">Mở trang này trên điện thoại và nhập mã PIN</div>
   <div class="pin">${pin}</div>
   <div id="pl" class="big">Chưa có ai</div>
   <button onclick="startGame()" style="font-size:1.25rem;padding:15px">▶ Bắt đầu</button>
-  <div class="two" style="margin-top:12px">
+  <button id="btnFsLobby" class="ghost" onclick="toggleFullScreen()" style="border-color:#26d0ce;color:#26d0ce;font-size:1.05rem;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">
+    <span id="btnFsIcon" style="font-size:1.2rem">${isFs ? '🗗' : '⛶'}</span>
+    <span id="btnFsText">${isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu'}</span>
+  </button>
+  <div class="two" style="margin-top:10px">
     <button class="ghost" onclick="openRoomSettings()" style="border-color:#ffd602;color:#ffd602;font-size:1.05rem">⚙ Sửa cài đặt</button>
     <button class="ghost" onclick="cancelRoom()" style="border-color:#ff4d4d;color:#ff8585;font-size:1.05rem">✕ Hủy phòng</button>
   </div>`);
@@ -478,7 +487,7 @@ function hostRejoin(v, silent) {
   curPin = v.pin;
   s.emit('host:rejoin', { pin: v.pin, htoken: v.htoken, token: tok }, r => {
     if (r.err) { sessionStorage.removeItem('qbh'); role = ''; gameActive = false; if (!silent) return; alert('Không vào lại được phòng: ' + r.err); return hostMenu(); }
-    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); cancelRoomBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
+    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); fullscreenBtn(); cancelRoomBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
     if (r.state === 'lobby') hostLobby(v.pin);
   });
 }
@@ -498,9 +507,11 @@ async function cancelRoom() {
   gameActive = false;
   role = '';
   stopMusic();
+  if (activeFireworksCleanup) activeFireworksCleanup();
   setBg('');
   setBrand(null);
   if ($('snd')) $('snd').remove();
+  if ($('fsbtn')) $('fsbtn').remove();
   if ($('cbtn')) $('cbtn').remove();
   if ($('smod')) $('smod').remove();
   hostMenu();
@@ -701,7 +712,7 @@ function create() {
     if (r.err) { alert(r.err); if (/phiên/.test(r.err)) hostLogin(); return; }
     role = 'host'; gameActive = true; muted = false; curPin = r.pin;
     sessionStorage.qbh = JSON.stringify({ pin: r.pin, htoken: r.htoken, title: curTitle, bg: !!bgData });
-    setBg(bgData); setBrand(brand); stopMusic(); if (src) startMusic(src, v); soundBtn(); hostLobby(r.pin);
+    setBg(bgData); setBrand(brand); stopMusic(); if (src) startMusic(src, v); soundBtn(); fullscreenBtn(); hostLobby(r.pin);
   });
 }
 // ---- âm thanh / hình nền / hiệu ứng / hộp xác nhận / lưu kết quả ----
@@ -726,6 +737,64 @@ function soundBtn() {
   if ($('snd')) return; const b = document.createElement('button'); b.id = 'snd'; b.className = 'sm';
   b.style.cssText = 'position:fixed;top:8px;right:8px;width:auto;z-index:8;padding:6px 10px'; b.textContent = '🔊';
   b.onclick = () => { muted = !muted; bgm.muted = muted; b.textContent = muted ? '🔇' : '🔊'; }; document.body.appendChild(b);
+}
+function isFullScreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+function updateFullscreenUI() {
+  const isFs = isFullScreen();
+  const icon = $('btnFsIcon');
+  const txt = $('btnFsText');
+  if (icon && txt) {
+    icon.textContent = isFs ? '🗗' : '⛶';
+    txt.textContent = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  }
+  const topBtn = $('fsbtn');
+  if (topBtn) {
+    topBtn.textContent = isFs ? '🗗' : '⛶';
+    topBtn.title = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  }
+}
+function toggleFullScreen() {
+  try {
+    if (!isFullScreen()) {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) {
+        const p = req.call(el);
+        if (p && p.catch) p.catch(() => {});
+      }
+    } else {
+      const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+      if (ex) {
+        const p = ex.call(document);
+        if (p && p.catch) p.catch(() => {});
+      }
+    }
+  } catch (e) {
+    console.warn('Fullscreen toggle failed:', e);
+  }
+}
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(ev => {
+  document.addEventListener(ev, updateFullscreenUI);
+});
+function fullscreenBtn() {
+  if ($('fsbtn')) return;
+  const b = document.createElement('button');
+  b.id = 'fsbtn';
+  b.className = 'sm';
+  b.style.cssText = 'position:fixed;top:8px;right:48px;width:auto;z-index:8;padding:6px 10px;font-size:0.95rem;background:#0008;border:1px solid #ffffff40;color:#fff;border-radius:8px;cursor:pointer;';
+  b.textContent = isFullScreen() ? '🗗' : '⛶';
+  b.title = isFullScreen() ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  b.onclick = toggleFullScreen;
+  document.body.appendChild(b);
+}
+function vibrateTap(ms = 45) {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(ms);
+    }
+  } catch (e) {}
 }
 const bgCss = u => u ? `linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url("${u}")` : '';
 function setBg(u) { const b = document.body.style; b.backgroundImage = bgCss(u); b.backgroundSize = 'cover'; b.backgroundPosition = 'center'; b.backgroundAttachment = 'fixed'; }
@@ -776,20 +845,232 @@ async function loadBg(f) {
   } catch { $('bgs').textContent = 'Không đọc được ảnh'; }
 }
 s.on('bg', u => setBg(u));
-function fireworks(ms = 7000) {
+let activeFireworksCleanup = null;
+function fireworks(ms = 8000, isGrand = true) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const cv = document.createElement('canvas'); cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9';
-  document.body.appendChild(cv); const x = cv.getContext('2d'); cv.width = innerWidth; cv.height = innerHeight;
-  let ps = [], end = Date.now() + ms, last = 0;
-  const burst = () => { const cx = Math.random() * cv.width, cy = Math.random() * cv.height * .5 + 40, col = `hsl(${Math.random() * 360},100%,60%)`;
-    for (let i = 0; i < (navigator.hardwareConcurrency <= 4 ? 30 : 70); i++) { const a = Math.random() * 6.28, v = Math.random() * 5 + 1; ps.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: 1, c: col }); } };
-  (function f(t) {
-    x.clearRect(0, 0, cv.width, cv.height);
-    if (Date.now() < end && t - last > 400) { burst(); last = t; }
-    ps = ps.filter(p => p.l > 0);
-    ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .06; p.vx *= .99; p.l -= .012; x.globalAlpha = Math.max(p.l, 0); x.fillStyle = p.c; x.fillRect(p.x, p.y, 3, 3); });
-    if (ps.length || Date.now() < end) requestAnimationFrame(f); else cv.remove();
-  })(0);
+  if (activeFireworksCleanup) { activeFireworksCleanup(); }
+
+  const cv = document.createElement('canvas');
+  cv.id = 'fw-canvas';
+  cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99;width:100vw;height:100vh';
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  
+  let w = cv.width = window.innerWidth;
+  let h = cv.height = window.innerHeight;
+  const onResize = () => {
+    if (!cv.parentNode) return;
+    w = cv.width = window.innerWidth;
+    h = cv.height = window.innerHeight;
+  };
+  window.addEventListener('resize', onResize);
+
+  const colors = [
+    { r: 255, g: 214, b: 2 },   // gold
+    { r: 255, g: 77,  b: 141 }, // vibrant pink
+    { r: 38,  g: 208, b: 206 }, // cyan / neon teal
+    { r: 140, g: 60,  b: 255 }, // royal purple
+    { r: 47,  g: 220, b: 90 },  // emerald / lime
+    { r: 255, g: 80,  b: 80 },  // radiant red
+    { r: 255, g: 175, b: 30 }   // bright orange
+  ];
+
+  let rockets = [];
+  let sparks = [];
+  let confetti = [];
+  let flash = 0;
+  const endTime = Date.now() + ms;
+  let animId = null;
+  let lastLaunch = 0;
+
+  function createRocket() {
+    const startX = Math.random() * (w * 0.8) + (w * 0.1);
+    const targetX = startX + (Math.random() - 0.5) * (w * 0.35);
+    const targetY = Math.random() * (h * 0.45) + (h * 0.08);
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    const speed = Math.sqrt((h - targetY) * 0.09) + Math.random() * 2 + 10;
+    const angle = Math.atan2(targetY - h, targetX - startX);
+    rockets.push({
+      x: startX,
+      y: h,
+      prevX: startX,
+      prevY: h,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      targetY: targetY,
+      color: col
+    });
+  }
+
+  function explode(x, y, baseColor) {
+    flash = Math.min(flash + 0.22, 0.4);
+    const count = (navigator.hardwareConcurrency <= 4 ? 45 : 85);
+    const type = Math.random();
+    const col2 = colors[Math.floor(Math.random() * colors.length)];
+    
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.35;
+      const speed = Math.random() * 6.8 + (type > 0.4 ? 2.5 : 1.5);
+      const isGold = type > 0.7 && Math.random() > 0.35;
+      const chosenCol = isGold ? { r: 255, g: 225, b: 90 } : (Math.random() > 0.5 ? baseColor : col2);
+      sparks.push({
+        x: x,
+        y: y,
+        prevX: x,
+        prevY: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        decay: Math.random() * 0.016 + 0.01,
+        color: chosenCol,
+        flicker: Math.random() * 10,
+        gravity: isGold ? 0.05 : 0.08,
+        friction: 0.965,
+        size: isGold ? (Math.random() * 2.8 + 1.6) : (Math.random() * 2.2 + 1.2)
+      });
+    }
+
+    if (isGrand) {
+      for (let k = 0; k < 12; k++) {
+        const cAngle = Math.random() * Math.PI * 2;
+        const cSpeed = Math.random() * 4.5 + 1.5;
+        const cCol = colors[Math.floor(Math.random() * colors.length)];
+        confetti.push({
+          x: x,
+          y: y,
+          vx: Math.cos(cAngle) * cSpeed,
+          vy: Math.sin(cAngle) * cSpeed - 2,
+          w: Math.random() * 7 + 5,
+          h: Math.random() * 4 + 3,
+          rot: Math.random() * 360,
+          vrot: (Math.random() - 0.5) * 12,
+          color: cCol,
+          alpha: 1,
+          decay: Math.random() * 0.007 + 0.005,
+          sway: Math.random() * 10
+        });
+      }
+    }
+  }
+
+  createRocket();
+  setTimeout(() => { if (cv.parentNode) createRocket(); }, 120);
+  setTimeout(() => { if (cv.parentNode) createRocket(); }, 300);
+
+  function loop(now) {
+    if (!cv.parentNode) return;
+    
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+
+    if (flash > 0.01) {
+      ctx.fillStyle = `rgba(255, 235, 190, ${flash * 0.35})`;
+      ctx.fillRect(0, 0, w, h);
+      flash *= 0.88;
+    }
+
+    if (Date.now() < endTime) {
+      const interval = isGrand ? 300 : 450;
+      if (now - lastLaunch > interval) {
+        createRocket();
+        if (isGrand && Math.random() > 0.4) {
+          setTimeout(() => { if (cv.parentNode) createRocket(); }, 100);
+        }
+        lastLaunch = now;
+      }
+    }
+
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.prevX = r.x;
+      r.prevY = r.y;
+      r.x += r.vx;
+      r.y += r.vy;
+      r.vy += 0.08;
+
+      ctx.strokeStyle = `rgba(${r.color.r}, ${r.color.g}, ${r.color.b}, 0.9)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(r.prevX, r.prevY);
+      ctx.lineTo(r.x, r.y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (r.vy >= -1 || r.y <= r.targetY) {
+        explode(r.x, r.y, r.color);
+        rockets.splice(i, 1);
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.prevX = s.x;
+      s.prevY = s.y;
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vx *= s.friction;
+      s.vy = s.vy * s.friction + s.gravity;
+      s.alpha -= s.decay;
+      s.flicker += 0.3;
+
+      if (s.alpha <= 0) {
+        sparks.splice(i, 1);
+        continue;
+      }
+
+      const flickAlpha = Math.max(0, Math.min(1, s.alpha * (0.75 + 0.25 * Math.sin(s.flicker))));
+      ctx.strokeStyle = `rgba(${s.color.r}, ${s.color.g}, ${s.color.b}, ${flickAlpha})`;
+      ctx.lineWidth = s.size;
+      ctx.beginPath();
+      ctx.moveTo(s.prevX, s.prevY);
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+    for (let i = confetti.length - 1; i >= 0; i--) {
+      const c = confetti[i];
+      c.x += c.vx + Math.sin(c.sway += 0.05) * 0.8;
+      c.y += c.vy;
+      c.vy = Math.min(c.vy + 0.06, 3);
+      c.rot += c.vrot;
+      c.alpha -= c.decay;
+
+      if (c.alpha <= 0 || c.y > h + 20) {
+        confetti.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate((c.rot * Math.PI) / 180);
+      ctx.fillStyle = `rgba(${c.color.r}, ${c.color.g}, ${c.color.b}, ${c.alpha})`;
+      ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+      ctx.restore();
+    }
+
+    if (rockets.length || sparks.length || confetti.length || Date.now() < endTime) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      cleanup();
+    }
+  }
+
+  function cleanup() {
+    if (animId) cancelAnimationFrame(animId);
+    window.removeEventListener('resize', onResize);
+    if (cv.parentNode) cv.remove();
+    if (activeFireworksCleanup === cleanup) activeFireworksCleanup = null;
+  }
+
+  activeFireworksCleanup = cleanup;
+  animId = requestAnimationFrame(loop);
 }
 function ask(msg, yes = 'Có', no = 'Không') {
   return new Promise(r => {
@@ -836,12 +1117,13 @@ function drawQ(note) {
   clearInterval(timer); const q = cur;
   const head = `<div class="meta"><span class="pill">Câu ${q.i}/${q.total}</span><span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span></div><div class="tbar"><i id="tb" style="width:100%"></i></div><div class="qcard">${esc(q.q)}</div>`;
   if (role === 'host') h(head + `<div class="grid">${q.options.map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${esc(o)}</div>`).join('')}</div><div id="an" class="big">0 đã trả lời</div>`);
-  else if (role === 'player') h(head + (note ? `<div class="er" style="color:#ffd602">${esc(note)}</div>` : '') + `<div class="grid">${q.options.map((o, i) => `<button style="background:${COL[i]}" onclick="ans(${i})">${SYM[i]} ${esc(o)}</button>`).join('')}</div>`);
+  else if (role === 'player') h(head + (note ? `<div class="er" style="color:#ffd602">${esc(note)}</div>` : '') + `<div class="grid">${q.options.map((o, i) => `<button class="ans-btn" style="background:${COL[i]}" onpointerdown="vibrateTap(40)" onclick="ans(${i})">${SYM[i]} ${esc(o)}</button>`).join('')}</div>`);
   timer = setInterval(() => { const t = Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0); if ($('tm')) $('tm').textContent = t; if ($('tb')) $('tb').style.width = Math.max(0, (qEnd - Date.now()) / (q.time * 1000) * 100) + '%'; if (t <= 0) clearInterval(timer); }, 500);
 }
 s.on('question', q => { cur = q; qEnd = Date.now() + q.time * 1000; drawQ(); });
 function showSent() { h(`<div class="emoji">✅</div><h1>Đã gửi!</h1><div class="big pulse">Chờ mọi người…</div>`); }
 function ans(i) {
+  vibrateTap(45);
   document.querySelectorAll('.grid button').forEach(b => b.disabled = true);
   let done = false;
   const to = setTimeout(() => { if (!done) { done = true; drawQ('Chưa gửi được, hãy chọn lại'); } }, 5000);
@@ -857,6 +1139,7 @@ const board = (t, me) => {
 };
 s.on('reveal', d => {
   clearInterval(timer); const mx = Math.max(...d.counts, 1), t0 = Date.now();
+  if (d.last) fireworks(7000, true);
   h(`<div class="okbar">✔ Đáp án đúng: ${SYM[d.correct]} ${esc(d.options[d.correct])}</div>
   ${d.options.map((o, i) => `<div class="${i === d.correct ? '' : 'dim'}" style="text-align:left;margin:8px 0">${SYM[i]} ${esc(o)} <span class="bar" style="width:${d.counts[i] / mx * 60}%;background:${COL[i]}"></span> ${d.counts[i]}</div>`).join('')}
   <h2>Bảng xếp hạng</h2>${board(d.top)}<button id="nx" disabled></button><div id="au2" class="big" style="color:#ffd602"></div>`);
@@ -871,9 +1154,13 @@ s.on('reveal', d => {
 });
 s.on('result', r => {
   clearInterval(timer);
+  const isLeader = r.rank === 1 && r.score > 0;
+  if (isLeader) fireworks(5500, true);
+  const leaderBadge = isLeader ? `<div class="pill t pulse" style="display:inline-block;margin:8px auto;padding:6px 18px;font-size:1.1rem;box-shadow:0 0 20px #ffd602bb">👑 BẠN ĐANG DẪN ĐẦU #1! 🏆</div>` : '';
   h(`<div class="panel ${r.correct ? 'ok' : 'bad'}"><h1>${r.answered ? (r.correct ? 'ĐÚNG! 🎉' : 'SAI 😅') : 'Hết giờ ⏰'}</h1>
+  ${leaderBadge}
   <div class="big">+${r.gained} điểm</div>${r.correct ? '' : `<div>Đáp án đúng: <b>${esc(r.correctText)}</b></div>`}</div>
-  <div class="big">Tổng ${r.score} điểm · Hạng ${r.rank}/${r.total}</div><div id="pn" class="big" style="color:#ffd602"></div>
+  <div class="big" style="${isLeader ? 'color:#ffd602;text-shadow:0 0 10px #ffd60288' : ''}">Tổng ${r.score} điểm · Hạng ${r.rank}/${r.total}</div><div id="pn" class="big" style="color:#ffd602"></div>
   <h2>Bảng xếp hạng</h2>${board(r.top, r.name)}`);
   const left0 = r.left, t0 = Date.now(), lab = r.last ? 'Kết quả cuối cùng sau' : 'Câu tiếp theo sau';
   const tk = () => { if (!$('pn')) return clearInterval(timer); $('pn').textContent = left0 == null ? 'Chờ host chuyển câu…' : `${lab} ${Math.max(Math.ceil(left0 - (Date.now() - t0) / 1000), 0)}s`; };
@@ -891,7 +1178,7 @@ async function leaveEnd(saved) {
 s.on('end', d => {
   clearInterval(timer); lastEnd = d; localStorage.removeItem('qb'); gameActive = false; stopMusic();
   const okLocal = d.full ? saveRes(d) : true;
-  showEnd(d, false); fireworks(); applause();
+  showEnd(d, false); fireworks(12000, true); applause();
   if (!okLocal && $('sl')) $('sl').textContent = '⚠ Không lưu được vào trình duyệt (bộ nhớ đầy?). Hãy tải CSV ngay!';
 });
 function csv() {
