@@ -119,7 +119,7 @@ function renderMusicOptions(selectedVal) {
 }
 
 const PK = 'qb_profiles';
-let activeProfileId = '';
+let activeProfileId = localStorage.qb_active_prof || '';
 function getProfiles() {
   try {
     const d = JSON.parse(localStorage[PK] || '[]');
@@ -128,7 +128,7 @@ function getProfiles() {
 }
 function putProfiles(arr) {
   try { localStorage[PK] = JSON.stringify(arr); return true; }
-  catch (e) { showToast('Không lưu được profile (bộ nhớ đầy)', true); return false; }
+  catch (e) { showToast('Không lưu được: bộ nhớ trình duyệt đã đầy. Hãy xoá bớt profile hoặc bỏ ảnh nền/logo.', true); return false; }
 }
 function renderProfileOptions(selectedId) {
   const profs = getProfiles();
@@ -171,41 +171,79 @@ function askInput(title, defaultValue = '') {
     });
   });
 }
+// ---- tiện ích form cài đặt: dùng chung cho form tạo phòng (m=false) và hộp sửa phòng (m=true) ----
+const num = (v, d, lo, hi) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : d; };   // số 0 vẫn được giữ đúng là 0
+function formVals(m) {
+  const g = id => $(m ? 'm_' + id : id);
+  const min = num(g('mn') && g('mn').value, 5, 0, 60);
+  return {
+    quizId: g('qz') ? g('qz').value : '',
+    quizTitle: ((g('qz') && g('qz').selectedOptions[0]) || {}).text || 'Quiz',
+    auto: g('au') ? g('au').checked : true,
+    shuffleQ: g('sq') ? g('sq').checked : false,
+    shuffleA: g('sa') ? g('sa').checked : true,
+    min,
+    wait: Math.max(min, num(g('wt') && g('wt').value, 10, 0, 120)),
+    music: g('mu') ? g('mu').value : 'vui.wav',
+    vol: num(g('vol') && g('vol').value, 50, 0, 100)
+  };
+}
+function buildProfile(m) {
+  const g = id => $(m ? 'm_' + id : id), v = formVals(m);
+  return { ...v,
+    bgData: (m ? (mBg !== undefined ? mBg : bgData) : bgData) || '',
+    logoData: (m ? (mLogo !== undefined ? mLogo : logoData) : logoData) || '',
+    brand: { title: g('bt') ? g('bt').value.trim() : '', sub: g('bs') ? g('bs').value.trim() : '', color: g('bc') ? g('bc').value : '#ffd602' } };
+}
+// Nhớ lại phần cài đặt của form (bộ câu hỏi, qua câu, thời gian) để mở lại bảng điều khiển vẫn còn nguyên
+function saveForm() {
+  if (!$('qz')) return;
+  const v = formVals(false);
+  try { localStorage.qb_form = JSON.stringify({ quizId: v.quizId, auto: v.auto, shuffleQ: v.shuffleQ, shuffleA: v.shuffleA, wait: v.wait, min: v.min }); } catch {}
+}
+function restoreForm() {
+  let f = null; try { f = JSON.parse(localStorage.qb_form || 'null'); } catch {}
+  if (!f || !$('qz')) return;
+  if ([...$('qz').options].some(o => o.value === String(f.quizId))) $('qz').value = f.quizId;
+  $('au').checked = !!f.auto; $('sq').checked = !!f.shuffleQ; $('sa').checked = f.shuffleA !== false;
+  $('wt').value = f.wait ?? 10; $('mn').value = f.min ?? 5;
+}
+function setActive(id) {
+  activeProfileId = id || '';
+  try { if (id) localStorage.qb_active_prof = id; else localStorage.removeItem('qb_active_prof'); } catch {}
+}
+function profUI(note) {
+  const on = !!activeProfileId;
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = on ? 'inline-block' : 'none';
+  if ($('btnDelProf')) $('btnDelProf').style.display = on ? 'inline-block' : 'none';
+  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions(activeProfileId);
+  if ($('profNote') && note != null) $('profNote').innerHTML = note;
+}
+const OKT = t => `<span style="color:#26890c;font-weight:700">${t}</span>`;
 function onSelectProfile(id) {
-  if (!id) {
-    activeProfileId = '';
-    if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
-    if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
-    if ($('profNote')) $('profNote').textContent = '';
-    return;
-  }
-  const profs = getProfiles();
-  const p = profs.find(x => x.id === id);
+  if (!id) { setActive(''); profUI(''); return; }
+  const p = getProfiles().find(x => x.id === id);
   if (p) applyProfile(p);
 }
-function applyProfile(p) {
+function applyProfile(p, quiet) {
   if (!p) return;
-  activeProfileId = p.id;
+  setActive(p.id);
+  let quizOk = true;
   if ($('qz')) {
-    for (let opt of $('qz').options) {
-      if (opt.value === p.quizId) { $('qz').value = p.quizId; break; }
-    }
+    quizOk = [...$('qz').options].some(o => o.value === String(p.quizId));
+    if (quizOk) $('qz').value = p.quizId;
   }
   if ($('au')) $('au').checked = !!p.auto;
   if ($('sq')) $('sq').checked = !!p.shuffleQ;
   if ($('sa')) $('sa').checked = p.shuffleA !== false;
   if ($('wt')) $('wt').value = p.wait ?? 10;
   if ($('mn')) $('mn').value = p.min ?? 5;
+  let musicNote = '';
   if ($('mu')) {
-    let matched = false;
-    for (let opt of $('mu').options) {
-      if (opt.value === p.music || opt.value.replace(/\.\w+$/, '') === (p.music || '').replace(/\.\w+$/, '')) {
-        $('mu').value = opt.value;
-        matched = true;
-        break;
-      }
-    }
-    if (!matched && p.music) $('mu').value = p.music;
+    const base = x => String(x || '').replace(/\.\w+$/, '');
+    const o = [...$('mu').options].find(o => o.value === p.music || base(o.value) === base(p.music));
+    if (o) $('mu').value = o.value;
+    else if (p.music) musicNote = p.music === 'custom' ? ' · ⚠ nhạc tự tải lên không lưu trong profile, hãy chọn lại file' : ` · ⚠ nhạc "${esc(p.music)}" không còn trong thư mục, đang giữ nhạc hiện tại`;
     if ($('muf')) $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none';
   }
   if ($('vol')) $('vol').value = p.vol ?? 50;
@@ -215,93 +253,52 @@ function applyProfile(p) {
   if ($('bc')) $('bc').value = (p.brand && p.brand.color) || '#ffd602';
   logoData = p.logoData || ''; refreshLogo();
   try {
-    localStorage.qb_set = JSON.stringify({ music: p.music || 'vui', vol: p.vol ?? 50 });
-    localStorage.qb_brand = JSON.stringify(p.brand || {});
-    localStorage.qb_bg = bgData;
-    localStorage.qb_logo = logoData;
+    localStorage.qb_set = JSON.stringify({ music: $('mu') ? $('mu').value : p.music, vol: p.vol ?? 50 });
+    localStorage.qb_brand = JSON.stringify({ title: (p.brand && p.brand.title) || '', sub: (p.brand && p.brand.sub) || '', color: (p.brand && p.brand.color) || '#ffd602' });
+    if (bgData) localStorage.qb_bg = bgData; else localStorage.removeItem('qb_bg');
+    if (logoData) localStorage.qb_logo = logoData; else localStorage.removeItem('qb_logo');
   } catch {}
-  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
-  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
-  if ($('profNote')) {
-    $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã nạp profile: <b>${esc(p.name)}</b></span> · Bộ câu hỏi: ${esc(p.quizTitle || 'Quiz')} · Chờ: ${p.wait}s · Nhạc: ${p.music}`;
+  saveForm();
+  const info = `Bộ câu hỏi: ${esc(p.quizTitle || 'Quiz')} · Chờ: ${p.wait ?? 10}s · Tối thiểu: ${p.min ?? 5}s · Nhạc: ${esc(p.music || '')}`;
+  if (!quizOk) {
+    profUI(`<span style="color:#e21b3c;font-weight:700">⚠ Bộ câu hỏi "${esc(p.quizTitle || '')}" của profile <b>${esc(p.name)}</b> không còn tồn tại.</span> Hãy chọn lại bộ câu hỏi rồi bấm "Cập nhật".${musicNote}`);
+    showToast('⚠ Bộ câu hỏi của profile không còn, hãy chọn lại', true);
+  } else {
+    profUI(OKT(`✔ Đã nạp profile: <b>${esc(p.name)}</b>`) + ' · ' + info + musicNote);
+    if (!quiet) showToast(`✔ Đã nạp Profile "${p.name}"! Tất cả cài đặt đã sẵn sàng.`);
   }
-  showToast(`✔ Đã nạp Profile "${p.name}"! Tất cả cài đặt đã sẵn sàng.`);
 }
 async function saveAsNewProfile() {
-  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || 'Quiz';
-  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
-  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  const n = buildProfile(false);
+  if (!n.quizId) return showToast('Chưa có bộ câu hỏi để lưu', true);
+  const name = await askInput('Đặt tên cho Profile mới:', n.quizTitle + ' - ' + new Date().toLocaleDateString('vi-VN'));
   if (!name) return;
-  const profs = getProfiles();
-  const newProfile = {
-    id: 'prof_' + Date.now(),
-    name,
-    createdAt: Date.now(),
-    quizId: $('qz') ? $('qz').value : '',
-    quizTitle: currentTitle,
-    auto: $('au') ? $('au').checked : true,
-    shuffleQ: $('sq') ? $('sq').checked : false,
-    shuffleA: $('sa') ? $('sa').checked : true,
-    wait: $('wt') ? Number($('wt').value) || 10 : 10,
-    min: $('mn') ? Number($('mn').value) || 5 : 5,
-    music: $('mu') ? $('mu').value : 'vui',
-    vol: $('vol') ? Number($('vol').value) : 50,
-    bgData: bgData || '',
-    brand: readBrand(),
-    logoData: logoData || ''
-  };
-  profs.unshift(newProfile);
-  putProfiles(profs);
-  activeProfileId = newProfile.id;
-  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions(newProfile.id);
-  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
-  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
-  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã lưu profile mới: <b>${esc(newProfile.name)}</b></span>`;
+  const prof = { id: 'prof_' + Date.now(), name, createdAt: Date.now(), ...n };
+  if (!putProfiles([prof, ...getProfiles()])) return;          // lưu lỗi thì đã báo, không báo thành công giả
+  setActive(prof.id);
+  profUI(OKT(`✔ Đã lưu profile mới: <b>${esc(name)}</b>`));
   showToast(`✔ Đã lưu Profile "${name}" thành công!`);
 }
 async function updateCurrentProfile() {
   if (!activeProfileId) return;
-  const profs = getProfiles();
-  const idx = profs.findIndex(p => p.id === activeProfileId);
-  if (idx < 0) return;
-  const current = profs[idx];
-  const ok = await ask(`Cập nhật toàn bộ cài đặt hiện tại vào Profile "<b>${esc(current.name)}</b>"?`, 'Cập nhật', 'Hủy');
-  if (!ok) return;
-  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || current.quizTitle || 'Quiz';
-  profs[idx] = {
-    ...current,
-    quizId: $('qz') ? $('qz').value : current.quizId,
-    quizTitle: currentTitle,
-    auto: $('au') ? $('au').checked : current.auto,
-    shuffleQ: $('sq') ? $('sq').checked : current.shuffleQ,
-    shuffleA: $('sa') ? $('sa').checked : current.shuffleA,
-    wait: $('wt') ? Number($('wt').value) || 10 : current.wait,
-    min: $('mn') ? Number($('mn').value) || 5 : current.min,
-    music: $('mu') ? $('mu').value : current.music,
-    vol: $('vol') ? Number($('vol').value) : current.vol,
-    bgData: bgData || '',
-    brand: readBrand(),
-    logoData: logoData || '',
-    updatedAt: Date.now()
-  };
-  putProfiles(profs);
-  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã cập nhật profile: <b>${esc(current.name)}</b></span>`;
-  showToast(`✔ Đã cập nhật Profile "${current.name}"!`);
+  const profs = getProfiles(), idx = profs.findIndex(p => p.id === activeProfileId);
+  if (idx < 0) { setActive(''); profUI('Profile này không còn tồn tại.'); return; }
+  const cur = profs[idx], n = buildProfile(false);
+  if (!n.quizId) return showToast('Chưa chọn bộ câu hỏi', true);
+  const sum = `Bộ câu hỏi: <b>${esc(n.quizTitle)}</b><br>Chờ tự qua: ${n.wait}s · Tối thiểu: ${n.min}s<br>Nhạc: ${esc(n.music)} · Âm lượng: ${n.vol}<br>Nền: ${n.bgData ? 'có' : 'không'} · Logo: ${n.logoData ? 'có' : 'không'} · Banner: ${esc(n.brand.title || '(trống)')}`;
+  if (!await ask(`Ghi đè profile "<b>${esc(cur.name)}</b>" bằng cài đặt <u>đang hiển thị trên form</u>?<br><small>${sum}</small>`, 'Ghi đè', 'Hủy')) return;
+  profs[idx] = { ...cur, ...n, id: cur.id, name: cur.name, createdAt: cur.createdAt, updatedAt: Date.now() };
+  if (!putProfiles(profs)) return;
+  profUI(OKT(`✔ Đã cập nhật profile: <b>${esc(cur.name)}</b>`));
+  showToast(`✔ Đã cập nhật Profile "${cur.name}"!`);
 }
 async function deleteCurrentProfile() {
   if (!activeProfileId) return;
-  const profs = getProfiles();
-  const p = profs.find(x => x.id === activeProfileId);
-  if (!p) return;
-  const ok = await ask(`Bạn có chắc muốn xoá Profile "<b>${esc(p.name)}</b>"?`, 'Xoá Profile', 'Giữ lại');
-  if (!ok) return;
-  const filtered = profs.filter(x => x.id !== activeProfileId);
-  putProfiles(filtered);
-  activeProfileId = '';
-  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions('');
-  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
-  if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
-  if ($('profNote')) $('profNote').textContent = 'Đã xoá profile.';
+  const profs = getProfiles(), p = profs.find(x => x.id === activeProfileId);
+  if (!p) { setActive(''); profUI(''); return; }
+  if (!await ask(`Bạn có chắc muốn xoá Profile "<b>${esc(p.name)}</b>"?`, 'Xoá Profile', 'Giữ lại')) return;
+  if (!putProfiles(profs.filter(x => x.id !== p.id))) return;
+  setActive(''); profUI('Đã xoá profile.');
   showToast(`✔ Đã xoá Profile "${p.name}".`);
 }
 function ensureDefaultProfile(qs) {
@@ -429,6 +426,11 @@ async function hostMenu(fromLogin) {
   bgData = localStorage.qb_bg || ''; refreshBg();
   const bs = JSON.parse(localStorage.qb_brand || '{}'); $('bt').value = bs.title || ''; $('bs').value = bs.sub || ''; $('bc').value = bs.color || '#ffd602';
   logoData = localStorage.qb_logo || ''; refreshLogo();
+  restoreForm();
+  const ap = getProfiles().find(x => x.id === activeProfileId);
+  if (!ap) setActive('');
+  profUI(ap ? `Profile đang chọn: <b>${esc(ap.name)}</b> · bấm "Cập nhật" để ghi cài đặt hiện tại vào profile này` : '');
+  const fc = $('qz').closest('.card'); fc.addEventListener('change', saveForm); fc.addEventListener('input', saveForm);
 }
 function toQuestions(rows) {
   const qs = [], bad = [];
@@ -488,9 +490,21 @@ function hostRejoin(v, silent) {
   curPin = v.pin;
   s.emit('host:rejoin', { pin: v.pin, htoken: v.htoken, token: tok }, r => {
     if (r.err) { sessionStorage.removeItem('qbh'); role = ''; gameActive = false; if (!silent) return; alert('Không vào lại được phòng: ' + r.err); return hostMenu(); }
-    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); fullscreenBtn(); cancelRoomBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
+    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); fullscreenBtn(); cancelRoomBtn();
+    bgData = bgData || localStorage.qb_bg || ''; logoData = logoData || localStorage.qb_logo || '';    // hình nền/banner do server gửi lại; đây chỉ để lưu profile
+    if (!curRoomSettings) { let st = {}; try { st = JSON.parse(localStorage.qb_set || '{}'); } catch {} curRoomSettings = { music: st.music || 'vui.wav', vol: st.vol ?? 50 }; }
+    resumeMusic();
     if (r.state === 'lobby') hostLobby(v.pin);
   });
+}
+// Phát lại nhạc nền sau khi refresh (trình duyệt có thể chặn tự phát -> phát ở lần chạm/bấm phím đầu tiên)
+function resumeMusic() {
+  if (!bgm.paused) return;
+  let st = {}; try { st = JSON.parse(localStorage.qb_set || '{}'); } catch {}
+  const src = st.music && st.music !== 'none' ? musicSrc(st.music) : '';
+  if (!src) return;
+  vol = num(st.vol, 50, 0, 100) / 100; bgm.src = src; bgm.volume = vol; bgm.muted = muted;
+  bgm.play().catch(() => { const go = () => { if (role === 'host' && bgm.paused) bgm.play().catch(() => {}); }; ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, go, { once: true })); });
 }
 function cancelRoomBtn() {
   if ($('cbtn')) return;
@@ -527,6 +541,7 @@ async function openRoomSettings() {
   }
   if (!cachedSounds || !cachedSounds.length) await fetchSounds();
   if ($('smod')) $('smod').remove();
+  mBg = undefined; mLogo = undefined;
   const st = curRoomSettings || {};
   const d = document.createElement('div');
   d.id = 'smod';
@@ -572,8 +587,9 @@ async function openRoomSettings() {
       <input id="m_bs" placeholder="Dòng chào" maxlength="120" value="${esc((st.brand && st.brand.sub) || '')}">
       <div class="two">
         <div>Màu nhấn<input type="color" id="m_bc" value="${(st.brand && st.brand.color) || '#ffd602'}" style="height:42px;padding:2px"></div>
-        <div>Hình nền<input type="file" accept="image/*" onchange="loadBg(this.files[0])"></div>
+        <div>Hình nền<input type="file" accept="image/*" onchange="modalPickBg(this.files[0])"><small id="m_bgs"></small></div>
       </div>
+      <div style="margin-top:8px">Logo (PNG/JPG, tự thu nhỏ)<input type="file" accept="image/*" onchange="modalPickLogo(this.files[0])"><small id="m_bls"></small></div>
 
       <div id="m_err" class="er" style="margin-top:8px"></div>
       <div style="display:flex;gap:10px;margin-top:16px">
@@ -583,6 +599,11 @@ async function openRoomSettings() {
     </div>
   `;
   document.body.appendChild(d);
+  const mu = $('m_mu'), muf = document.createElement('input');
+  muf.type = 'file'; muf.accept = 'audio/*'; muf.id = 'm_muf'; muf.style.display = mu.value === 'custom' ? 'block' : 'none'; mu.after(muf);
+  mu.onchange = () => { muf.style.display = mu.value === 'custom' ? 'block' : 'none'; };
+  muf.onchange = e => { if (e.target.files[0]) customUrl = URL.createObjectURL(e.target.files[0]); };
+  modalBgStatus(); modalLogoStatus();
 }
 function previewModalMusic() {
   if (!bgm.paused) return stopMusic();
@@ -593,123 +614,96 @@ function previewModalMusic() {
 function closeRoomSettings() {
   if ($('smod')) $('smod').remove();
 }
+let mBg, mLogo;   // trong hộp sửa phòng: undefined = giữ nguyên · '' = xoá · dataURL = ảnh mới
+const lnk = (fn, t) => ` · <a href="#" style="color:#1368ce" onclick="${fn}();return false">${t}</a>`;
+function modalBgStatus() {
+  const e = $('m_bgs'); if (!e) return;
+  e.innerHTML = mBg === undefined ? (curRoomSettings && curRoomSettings.hasBg ? '✔ Đang dùng hình nền hiện tại' + lnk('modalClearBg', 'xoá') : 'Chưa có hình nền')
+    : mBg === '' ? 'Sẽ xoá hình nền khi bấm Lưu' + lnk('modalUndoBg', 'hoàn tác') : '✔ Đã chọn ảnh mới (bấm Lưu để áp dụng)' + lnk('modalUndoBg', 'bỏ');
+}
+function modalLogoStatus() {
+  const e = $('m_bls'); if (!e) return;
+  e.innerHTML = mLogo === undefined ? (curRoomSettings && curRoomSettings.hasLogo ? '✔ Đang dùng logo hiện tại' + lnk('modalClearLogo', 'xoá') : 'Chưa có logo')
+    : mLogo === '' ? 'Sẽ xoá logo khi bấm Lưu' + lnk('modalUndoLogo', 'hoàn tác') : '✔ Đã chọn logo mới (bấm Lưu để áp dụng)' + lnk('modalUndoLogo', 'bỏ');
+}
+function modalClearBg() { mBg = ''; modalBgStatus(); }
+function modalUndoBg() { mBg = undefined; modalBgStatus(); }
+function modalClearLogo() { mLogo = ''; modalLogoStatus(); }
+function modalUndoLogo() { mLogo = undefined; modalLogoStatus(); }
+async function modalPickBg(f) { if (!f) return; try { mBg = await fileToBg(f); } catch { alert('Không đọc được ảnh'); return; } modalBgStatus(); }
+async function modalPickLogo(f) { if (!f) return; try { mLogo = await fileToLogo(f); } catch { alert('Không đọc được ảnh'); return; } modalLogoStatus(); }
 function onModalSelectProfile(profId) {
   if (!profId) return;
   const p = getProfiles().find(x => x.id === profId);
   if (!p) return;
-  if ($('m_qz')) {
-    for (let opt of $('m_qz').options) {
-      if (opt.value === p.quizId) { $('m_qz').value = p.quizId; break; }
-    }
-  }
-  if ($('m_au')) $('m_au').checked = !!p.auto;
-  if ($('m_sq')) $('m_sq').checked = !!p.shuffleQ;
-  if ($('m_sa')) $('m_sa').checked = p.shuffleA !== false;
-  if ($('m_wt')) $('m_wt').value = p.wait ?? 10;
-  if ($('m_mn')) $('m_mn').value = p.min ?? 5;
-  if ($('m_mu')) $('m_mu').value = p.music || 'vui';
-  if ($('m_vol')) $('m_vol').value = p.vol ?? 50;
-  if ($('m_bt')) $('m_bt').value = (p.brand && p.brand.title) || '';
-  if ($('m_bs')) $('m_bs').value = (p.brand && p.brand.sub) || '';
-  if ($('m_bc')) $('m_bc').value = (p.brand && p.brand.color) || '#ffd602';
-  if (p.bgData != null) bgData = p.bgData;
-  if (p.logoData != null) logoData = p.logoData;
-  showToast(`✔ Đã nạp Profile "${p.name}" vào bảng sửa! Bấm "Lưu cài đặt" để áp dụng cho phòng.`);
+  const set = (id, fn) => { const e = $('m_' + id); if (e) fn(e); };
+  let quizOk = false;
+  set('qz', e => { quizOk = [...e.options].some(o => o.value === String(p.quizId)); if (quizOk) e.value = p.quizId; });
+  set('au', e => e.checked = !!p.auto);
+  set('sq', e => e.checked = !!p.shuffleQ);
+  set('sa', e => e.checked = p.shuffleA !== false);
+  set('wt', e => e.value = p.wait ?? 10);
+  set('mn', e => e.value = p.min ?? 5);
+  set('mu', e => {
+    const base = x => String(x || '').replace(/\.\w+$/, '');
+    const o = [...e.options].find(o => o.value === p.music || base(o.value) === base(p.music));
+    if (o) e.value = o.value;
+    if (e.onchange) e.onchange();
+  });
+  set('vol', e => e.value = p.vol ?? 50);
+  set('bt', e => e.value = (p.brand && p.brand.title) || '');
+  set('bs', e => e.value = (p.brand && p.brand.sub) || '');
+  set('bc', e => e.value = (p.brand && p.brand.color) || '#ffd602');
+  mBg = p.bgData || ''; mLogo = p.logoData || ''; modalBgStatus(); modalLogoStatus();
+  if (!quizOk) showToast('⚠ Bộ câu hỏi của profile không còn, đang giữ bộ câu hỏi hiện tại', true);
+  else showToast(`✔ Đã nạp Profile "${p.name}" vào bảng sửa! Bấm "Lưu cài đặt" để áp dụng cho phòng.`);
 }
 async function saveModalAsProfile() {
-  const currentTitle = (($('m_qz') && $('m_qz').selectedOptions[0]) || {}).text || 'Quiz';
-  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
-  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  const n = buildProfile(true);
+  if (!n.quizId) return showToast('Chưa có bộ câu hỏi để lưu', true);
+  const name = await askInput('Đặt tên cho Profile mới:', n.quizTitle + ' - ' + new Date().toLocaleDateString('vi-VN'));
   if (!name) return;
-  const profs = getProfiles();
-  const newProfile = {
-    id: 'prof_' + Date.now(),
-    name,
-    createdAt: Date.now(),
-    quizId: $('m_qz') ? $('m_qz').value : '',
-    quizTitle: currentTitle,
-    auto: $('m_au') ? $('m_au').checked : true,
-    shuffleQ: $('m_sq') ? $('m_sq').checked : false,
-    shuffleA: $('m_sa') ? $('m_sa').checked : true,
-    wait: $('m_wt') ? Number($('m_wt').value) || 10 : 10,
-    min: $('m_mn') ? Number($('m_mn').value) || 5 : 5,
-    music: $('m_mu') ? $('m_mu').value : 'vui',
-    vol: $('m_vol') ? Number($('m_vol').value) : 50,
-    bgData: bgData || '',
-    brand: {
-      title: $('m_bt') ? $('m_bt').value.trim() : '',
-      sub: $('m_bs') ? $('m_bs').value.trim() : '',
-      color: $('m_bc') ? $('m_bc').value : '#ffd602'
-    },
-    logoData: logoData || ''
-  };
-  profs.unshift(newProfile);
-  putProfiles(profs);
-  if ($('m_prof')) $('m_prof').innerHTML = renderProfileOptions(newProfile.id);
+  const prof = { id: 'prof_' + Date.now(), name, createdAt: Date.now(), ...n };
+  if (!putProfiles([prof, ...getProfiles()])) return;
+  setActive(prof.id);
+  if ($('m_prof')) $('m_prof').innerHTML = renderProfileOptions(prof.id);
   showToast(`✔ Đã lưu Profile "${name}" thành công!`);
 }
 async function saveRoomSettings() {
-  const qzId = $('m_qz').value;
-  const auto = $('m_au').checked;
-  const shuffleQ = $('m_sq').checked;
-  const shuffleA = $('m_sa').checked;
-  const wait = Number($('m_wt').value);
-  const min = Number($('m_mn').value);
-  const music = $('m_mu').value;
-  const volVal = Number($('m_vol').value);
-  const brand = {
-    title: $('m_bt').value.trim(),
-    sub: $('m_bs').value.trim(),
-    color: $('m_bc').value,
-    logo: logoData
-  };
-  const payload = { id: qzId, auto, shuffleQ, shuffleA, wait, min, brand, bg: bgData };
+  const v = formVals(true);
+  if (!v.quizId) { if ($('m_err')) $('m_err').textContent = 'Chưa chọn bộ câu hỏi'; return; }
+  const brand = { title: $('m_bt').value.trim(), sub: $('m_bs').value.trim(), color: $('m_bc').value };
+  if (mLogo !== undefined) brand.logo = mLogo;                 // chỉ gửi logo/nền khi host thật sự đổi -> không bao giờ vô tình xoá
+  const payload = { id: v.quizId, auto: v.auto, shuffleQ: v.shuffleQ, shuffleA: v.shuffleA, wait: v.wait, min: v.min, brand };
+  if (mBg !== undefined) payload.bg = mBg;
   s.emit('host:update_settings', payload, r => {
-    if (r && r.err) {
-      if ($('m_err')) $('m_err').textContent = r.err;
-      return;
-    }
-    const qzTitle = (($('m_qz').selectedOptions[0]) || {}).text || curTitle;
-    curTitle = qzTitle;
-    curRoomSettings = { id: qzId, title: qzTitle, auto, shuffleQ, shuffleA, wait, min, music, vol: volVal, bg: bgData, brand };
+    if (!r || r.err) { if ($('m_err')) $('m_err').textContent = (r && r.err) || 'Không lưu được, hãy thử lại'; return; }
+    curTitle = v.quizTitle;
+    curRoomSettings = { ...(curRoomSettings || {}), ...r.settings, music: v.music, vol: v.vol };
     try {
-      localStorage.qb_set = JSON.stringify({ music, vol: volVal });
-      localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color });
+      if (mBg !== undefined) { bgData = mBg; if (mBg) localStorage.qb_bg = mBg; else localStorage.removeItem('qb_bg'); }
+      if (mLogo !== undefined) { logoData = mLogo; if (mLogo) localStorage.qb_logo = mLogo; else localStorage.removeItem('qb_logo'); }
+      localStorage.qb_set = JSON.stringify({ music: v.music, vol: v.vol });
+      localStorage.qb_brand = JSON.stringify(brand.logo === undefined ? brand : { title: brand.title, sub: brand.sub, color: brand.color });
+      localStorage.qb_form = JSON.stringify({ quizId: v.quizId, auto: v.auto, shuffleQ: v.shuffleQ, shuffleA: v.shuffleA, wait: v.wait, min: v.min });
+      const hv = JSON.parse(sessionStorage.qbh || '{}'); hv.title = curTitle; sessionStorage.qbh = JSON.stringify(hv);
     } catch {}
-    setBrand(brand);
-    setBg(bgData);
     stopMusic();
-    if (music !== 'none') {
-      const src = musicSrc(music);
-      if (src) startMusic(src, volVal / 100);
-    }
+    if (v.music !== 'none') { const src = musicSrc(v.music); if (src) startMusic(src, v.vol / 100); }
     if ($('smod')) $('smod').remove();
-    const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#26890c;color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99;box-shadow:0 6px 16px #0004';
-    toast.textContent = '✔ Đã cập nhật cài đặt phòng!';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+    showToast('✔ Đã cập nhật cài đặt phòng!');
   });
 }
 function create() {
-  const music = $('mu').value, v = $('vol').value / 100, src = musicSrc(music);
-  try { localStorage.qb_set = JSON.stringify({ music, vol: $('vol').value }); } catch {}
-  curTitle = (($('qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const f = formVals(false), v = f.vol / 100, src = musicSrc(f.music);
+  if (!f.quizId) return alert('Chưa có bộ câu hỏi nào để chơi');
+  try { localStorage.qb_set = JSON.stringify({ music: f.music, vol: f.vol }); } catch {}
+  saveForm();
+  curTitle = f.quizTitle;
   const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color }); } catch {}
-  curRoomSettings = {
-    id: $('qz').value,
-    title: curTitle,
-    auto: $('au').checked,
-    shuffleQ: $('sq').checked,
-    shuffleA: $('sa').checked,
-    wait: Number($('wt').value),
-    min: Number($('mn').value),
-    music,
-    vol: $('vol').value,
-    bg: bgData,
-    brand
-  };
-  s.emit('host:create', { token: tok, id: $('qz').value, auto: $('au').checked, shuffleQ: $('sq').checked, shuffleA: $('sa').checked, wait: $('wt').value, min: $('mn').value, bg: bgData, brand }, r => {
+  curRoomSettings = { id: f.quizId, title: curTitle, auto: f.auto, shuffleQ: f.shuffleQ, shuffleA: f.shuffleA, wait: f.wait, min: f.min,
+    music: f.music, vol: f.vol, hasBg: !!bgData, hasLogo: !!logoData, brand };
+  s.emit('host:create', { token: tok, id: f.quizId, auto: f.auto, shuffleQ: f.shuffleQ, shuffleA: f.shuffleA, wait: f.wait, min: f.min, bg: bgData, brand }, r => {
     if (r.err) { alert(r.err); if (/phiên/.test(r.err)) hostLogin(); return; }
     role = 'host'; gameActive = true; muted = false; curPin = r.pin;
     sessionStorage.qbh = JSON.stringify({ pin: r.pin, htoken: r.htoken, title: curTitle, bg: !!bgData });
@@ -810,19 +804,21 @@ const setBrand = b => { const e = $('brand'); if (e) e.innerHTML = brandHtml(b);
 const readBrand = () => ({ title: $('bt').value.trim(), sub: $('bs').value.trim(), color: $('bc').value, logo: logoData });
 s.on('brand', b => setBrand(b));
 s.on('host:settings', d => { if (d) { curRoomSettings = { ...(curRoomSettings || {}), ...d }; if (d.title) curTitle = d.title; } });
-function refreshLogo() { $('bls').innerHTML = logoData ? '✔ Đã chọn logo · <a href="#" style="color:#1368ce" onclick="clearLogo();return false">xoá</a>' : 'Chưa chọn'; }
+function refreshLogo() { if (!$('bls')) return; $('bls').innerHTML = logoData ? '✔ Đã chọn logo · <a href="#" style="color:#1368ce" onclick="clearLogo();return false">xoá</a>' : 'Chưa chọn'; }
 function clearLogo() { logoData = ''; localStorage.removeItem('qb_logo'); refreshLogo(); }
+async function fileToLogo(f) {
+  const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+  let k = Math.min(1, 256 / Math.max(img.width, img.height)), u;
+  do {
+    const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); u = cv.toDataURL('image/png'); k *= .75;
+  } while (u.length > 190000 && k > .05);
+  return u;
+}
 async function loadLogo(f) {
   if (!f) return;
-  try {
-    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
-    let k = Math.min(1, 256 / Math.max(img.width, img.height)), u;
-    do {
-      const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); u = cv.toDataURL('image/png'); k *= .75;
-    } while (u.length > 190000 && k > .05);
-    logoData = u; try { localStorage.qb_logo = u; } catch {} refreshLogo();
-  } catch { $('bls').textContent = 'Không đọc được ảnh'; }
+  try { logoData = await fileToLogo(f); try { localStorage.qb_logo = logoData; } catch {} refreshLogo(); }
+  catch { if ($('bls')) $('bls').textContent = 'Không đọc được ảnh'; }
 }
 function previewUI() {
   const prevPlaying = !bgm.paused;
@@ -915,17 +911,19 @@ function previewUI() {
 
   document.body.appendChild(d);
 }
-function refreshBg() { $('bgs').innerHTML = bgData ? '✔ Đã chọn hình nền · <a href="#" style="color:#1368ce" onclick="clearBg();return false">xoá</a>' : 'Chưa chọn'; }
+function refreshBg() { if (!$('bgs')) return; $('bgs').innerHTML = bgData ? '✔ Đã chọn hình nền · <a href="#" style="color:#1368ce" onclick="clearBg();return false">xoá</a>' : 'Chưa chọn'; }
 function clearBg() { bgData = ''; localStorage.removeItem('qb_bg'); refreshBg(); }
+async function fileToBg(f) {
+  const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+  const k = Math.min(1, 1024 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+  cv.width = img.width * k; cv.height = img.height * k; cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  let q = .75, u = cv.toDataURL('image/jpeg', q); while (u.length > 260000 && q > .3) { q -= .1; u = cv.toDataURL('image/jpeg', q); }
+  return u;
+}
 async function loadBg(f) {
   if (!f) return;
-  try {
-    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
-    const k = Math.min(1, 1024 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
-    cv.width = img.width * k; cv.height = img.height * k; cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    let q = .75, u = cv.toDataURL('image/jpeg', q); while (u.length > 260000 && q > .3) { q -= .1; u = cv.toDataURL('image/jpeg', q); }
-    bgData = u; try { localStorage.qb_bg = u; } catch {} refreshBg();
-  } catch { $('bgs').textContent = 'Không đọc được ảnh'; }
+  try { bgData = await fileToBg(f); try { localStorage.qb_bg = bgData; } catch {} refreshBg(); }
+  catch { if ($('bgs')) $('bgs').textContent = 'Không đọc được ảnh'; }
 }
 s.on('bg', u => setBg(u));
 let activeFireworksCleanup = null;
@@ -1203,7 +1201,7 @@ function drawQ(note) {
   else if (role === 'player') h(head + (note ? `<div class="er" style="color:#ffd602">${esc(note)}</div>` : '') + `<div class="grid">${q.options.map((o, i) => `<button class="ans-btn" style="background:${COL[i]}" onpointerdown="vibrateTap(40)" onclick="ans(${i})">${SYM[i]} ${esc(o)}</button>`).join('')}</div>`);
   timer = setInterval(() => { const t = Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0); if ($('tm')) $('tm').textContent = t; if ($('tb')) $('tb').style.width = Math.max(0, (qEnd - Date.now()) / (q.time * 1000) * 100) + '%'; if (t <= 0) clearInterval(timer); }, 500);
 }
-s.on('question', q => { cur = q; qEnd = Date.now() + q.time * 1000; drawQ(); });
+s.on('question', q => { if ($('smod')) $('smod').remove(); cur = q; qEnd = Date.now() + q.time * 1000; drawQ(); });
 function showSent() { h(`<div class="emoji">✅</div><h1>Đã gửi!</h1><div class="big pulse">Chờ mọi người…</div>`); }
 function ans(i) {
   vibrateTap(45);
@@ -1272,7 +1270,7 @@ function csv() {
   a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(e).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
   a.download = 'ket-qua.csv'; a.click();
 }
-s.on('closed', () => { localStorage.removeItem('qb'); role = ''; alert('Host đã thoát phòng'); home(); });
+s.on('closed', why => { localStorage.removeItem('qb'); role = ''; alert(why === 'cancel' ? 'Host đã hủy phòng này' : 'Host đã thoát phòng'); home(); });
 let saved = JSON.parse(localStorage.qb || 'null');
 if (saved && Date.now() - (saved.t || 0) > 6 * 3600e3) { localStorage.removeItem('qb'); saved = null; }
 const savedH = JSON.parse(sessionStorage.qbh || 'null');
