@@ -508,7 +508,7 @@ function doJoin(pin, name, token, silent) {
 }
 function hostLogin() {
   removeGuideBtn();
-  h(`<h1>Đăng nhập host</h1><div class="card"><input id="pw" type="password" placeholder="Mật khẩu host">
+  h(`<h1>Đăng nhập host</h1><div class="card"><input id="pw" type="password" placeholder="Mật khẩu host ( Call: 09-1800-1944)">
   <button onclick="doLogin()">Đăng nhập</button><div id="err" class="er"></div></div><button class="ghost" onclick="home()">← Quay lại</button>`);
   $('pw').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
 }
