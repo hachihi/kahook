@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>QuizBlast</title>
 <meta name="description" content="QuizBlast - Đố vui, thi đua, bứt phá. Trò chơi trắc nghiệm tương tác thời gian thực.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo 2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#46178f;color:#fff;min-height:100vh;display:flex;justify-content:center}
 main{width:100%;max-width:760px;padding:20px;text-align:center}h1{font-size:2.4rem;margin:.6em 0}
@@ -82,7 +82,22 @@ button.ghost{background:#ffffff14;backdrop-filter:blur(4px)}
 .pod .bar2{animation:rise .9s cubic-bezier(.2,1.2,.4,1) both;transform-origin:bottom}@keyframes rise{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
 .pod .p1 .nm{font-size:1.15rem}
 .er{font-weight:700}
-@media(max-width:480px){body::before,body::after{animation:none}.qcard{font-size:1.25rem}#pin{font-size:1.4rem}}
+
+/* Styling Bổ sung cho Tab Hướng dẫn */
+.guide-card{background:#ffffff;color:#222;border-radius:20px;padding:22px;margin:16px 0;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,0.18)}
+.guide-card h2{color:var(--p);font-family:"Baloo 2",sans-serif;font-size:1.5rem;margin-top:0;margin-bottom:12px;border-bottom:2px solid #f0eafc;padding-bottom:6px;display:flex;align-items:center;gap:8px}
+.guide-step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+.guide-step .num{background:linear-gradient(135deg,var(--p),#7b2ff7);color:#fff;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:1.2rem;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(123,47,247,0.3)}
+.guide-step .cnt{flex:1;font-size:0.98rem;line-height:1.5;color:#333}
+.guide-step .cnt b{color:var(--p)}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.contact-item{background:#f8f5ff;border:1.5px solid #e2d8f8;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;text-decoration:none;color:#222;transition:transform .15s,box-shadow .15s}
+.contact-item:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.08);background:#f2ebff}
+.contact-item .icon{font-size:1.6rem}
+.contact-item .info div:first-child{font-size:0.8rem;color:#666;font-weight:700;text-transform:uppercase}
+.contact-item .info div:last-child{font-size:1rem;font-weight:800;color:var(--p)}
+
+@media(max-width:480px){body::before,body::after{animation:none}.qcard{font-size:1.25rem}#pin{font-size:1.4rem}.contact-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style></head><body><div id="net" style="display:none;position:fixed;top:0;left:0;right:0;background:#e21b3c;padding:6px;font-size:.9rem">Mất kết nối, đang kết nối lại…</div><div id="wrap"><div id="brand"></div><main id="app"></main></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -171,6 +186,132 @@ function askInput(title, defaultValue = '') {
     });
   });
 }
+
+// Nút góc phải trên cùng tới trang Giới thiệu & Hướng dẫn
+function guideBtn() {
+  if ($('guideTopBtn')) return;
+  const b = document.createElement('button'); b.id = 'guideTopBtn'; b.className = 'sm';
+  b.style.cssText = 'position:fixed;top:8px;right:8px;width:auto;z-index:10;padding:6px 14px;font-size:0.95rem;background:linear-gradient(#ffe24d,#ffc400);color:#3a1670;border:none;border-radius:10px;font-weight:800;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.2);';
+  b.textContent = '📖 Hướng dẫn';
+  b.onclick = showGuideTab;
+  document.body.appendChild(b);
+}
+
+function removeGuideBtn() {
+  if ($('guideTopBtn')) $('guideTopBtn').remove();
+}
+
+function showGuideTab() {
+  stopMusic(); setBg(''); setBrand(null);
+  if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
+  removeGuideBtn();
+
+  h(`
+    <div style="text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <button class="ghost" onclick="home()" style="width:auto;padding:8px 16px;margin:0">← Quay lại trang chủ</button>
+      </div>
+
+      <div class="logo" style="text-align:center;margin:10px 0 0"><span class="bolt">⚡QuizBlast</span></div>
+      <div class="sub" style="text-align:center">Nền Tảng Trắc Nghiệm Tương Tác Trực Tuyến Hàng Đầu</div>
+
+      <!-- Giới thiệu -->
+      <div class="guide-card">
+        <h2>✨ Giới thiệu QuizBlast</h2>
+        <p style="margin:0;line-height:1.6;color:#444">
+          <b>QuizBlast</b> là hệ thống đấu trí, trắc nghiệm tương tác thời gian thực được phát triển bởi <b>Hachihi.vn</b>. Hệ thống mang đến trải nghiệm thi đấu bứt phá, sôi động phù hợp cho các sự kiện doanh nghiệp, hội thảo, giảng dạy trực tuyến, sinh hoạt tập thể và các chương trình mini-game giao lưu.
+        </p>
+      </div>
+
+      <!-- Hướng dẫn sử dụng -->
+      <div class="guide-card">
+        <h2>🚀 Hướng Dẫn Sử Dụng Chuyên Nghiệp</h2>
+        
+        <div class="guide-step">
+          <div class="num">1</div>
+          <div class="cnt">
+            <b>Dành cho Người Chơi (Player):</b><br>
+            • Nhập mã <b>PIN</b> từ màn hình trình chiếu của Host.<br>
+            • Đặt <b>Tên đại diện</b> của bạn và chọn <b>🚀 Vào chơi</b>.<br>
+            • Khi câu hỏi xuất hiện, chọn nhanh đáp án chính xác nhất trên màn hình thiết bị của bạn để đạt điểm số tối đa.
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="num">2</div>
+          <div class="cnt">
+            <b>Dành cho Ban Tổ Chức / Quản Trò (Host):</b><br>
+            • Chọn <b>"Tôi là host"</b> tại trang chủ và đăng nhập bằng mật khẩu quản trị.<br>
+            • **Nạp câu hỏi**: Tải file Excel (`.xlsx`, `.csv`) hoặc dán liên kết Google Sheet công khai.<br>
+            • **Cấu hình phòng chơi**: Tuỳ chỉnh nhạc nền, ảnh nền sự kiện, banner logo thương hiệu và chế độ chuyển câu tự động.<br>
+            • **Khởi tạo phòng**: Nhấn <b>"Tạo phòng"</b>, trình chiếu mã PIN lên màn hình lớn và bấm <b>"▶ Bắt đầu"</b> khi các người chơi đã sẵn sàng.
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="num">3</div>
+          <div class="cnt">
+            <b>Tổng kết & Đánh giá:</b><br>
+            • Sau mỗi câu hỏi và khi kết thúc lượt chơi, bảng vinh danh Top 3 kèm hiệu ứng pháo hoa sẽ xuất hiện.<br>
+            • Host có thể tải file tổng hợp bảng điểm chi tiết định dạng CSV về máy.
+          </div>
+        </div>
+      </div>
+
+      <!-- Thông tin liên hệ & Đơn vị phát triển -->
+      <div class="guide-card">
+        <h2>🌐 Thông Tin Liên Hệ & Hỗ Trợ</h2>
+        <div style="font-size:0.95rem;color:#555;margin-bottom:12px">Đơn vị cung cấp giải pháp và hỗ trợ kỹ thuật trực tiếp:</div>
+        
+        <div class="contact-grid">
+          <a class="contact-item" href="https://hachihi.vn" target="_blank" rel="noopener">
+            <span class="icon">🌐</span>
+            <div class="info">
+              <div>Website chính thức</div>
+              <div>Hachihi.vn</div>
+            </div>
+          </a>
+
+          <a class="contact-item" href="https://zalo.me/46842595266596734" target="_blank" rel="noopener">
+            <span class="icon">💬</span>
+            <div class="info">
+              <div>Zalo Official Account</div>
+              <div>0933842126</div>
+            </div>
+          </a>
+
+          <a class="contact-item" href="tel:0933842126">
+            <span class="icon">📞</span>
+            <div class="info">
+              <div>Hotline tư vấn</div>
+              <div>0933 842 126</div>
+            </div>
+          </a>
+
+          <a class="contact-item" href="tel:0918001944">
+            <span class="icon">🎧</span>
+            <div class="info">
+              <div>Tổng đài Support</div>
+              <div>09-1800-1944</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Nút Gửi phản hồi -->
+      <div class="guide-card" style="text-align:center;background:linear-gradient(135deg,#faf8ff,#f1ebff);border:2px dashed #7b2ff7">
+        <h3 style="margin:0 0 8px;color:var(--p);font-family:'Baloo 2',sans-serif">Đóng Góp Ý Kiến & Báo Lỗi</h3>
+        <p style="margin:0 0 16px;font-size:0.95rem;color:#666">Chúng tôi luôn lắng nghe ý kiến đóng góp của bạn để hoàn thiện hệ thống tốt hơn!</p>
+        <button class="cta" onclick="window.open('https://forms.gle/LNJFqKKqQALfK63r7','_blank')" style="max-width:320px;margin:0 auto;display:block">
+          📝 Gửi phản hồi ngay
+        </button>
+      </div>
+
+      <button class="ghost" onclick="home()" style="margin-top:10px">← Quay lại trang chủ</button>
+    </div>
+  `);
+}
+
 // ---- tiện ích form cài đặt: dùng chung cho form tạo phòng (m=false) và hộp sửa phòng (m=true) ----
 const num = (v, d, lo, hi) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : d; };   // số 0 vẫn được giữ đúng là 0
 function formVals(m) {
@@ -328,7 +469,9 @@ function ensureDefaultProfile(qs) {
 }
 
 function home() {
-  role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
+  role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh');
+  guideBtn();
+  h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
   <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
   <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
   <button class="ghost" onclick="hostLogin()">Tôi là host </button>`);
@@ -341,11 +484,13 @@ function doJoin(pin, name, token, silent) {
       else $('err').textContent = r.err;
       return;
     }
+    removeGuideBtn();
     role = 'player'; localStorage.qb = JSON.stringify({ pin, name: r.name, token: r.token, t: Date.now() });
     if (r.state === 'lobby') h(`<div class="emoji">🎮</div><h1>Bạn đã vào phòng!</h1><div class="big pulse">Chờ host bắt đầu…</div><div class="sub">Nhìn lên màn hình xem tên mình nhé 👀</div>`);
   });
 }
 function hostLogin() {
+  removeGuideBtn();
   h(`<h1>Đăng nhập host</h1><div class="card"><input id="pw" type="password" placeholder="Mật khẩu host">
   <button onclick="doLogin()">Đăng nhập</button><div id="err" class="er"></div></div><button class="ghost" onclick="home()">← Quay lại</button>`);
   $('pw').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
@@ -356,6 +501,7 @@ async function doLogin() {
   tok = d.token; await hostMenu(true);
 }
 async function hostMenu(fromLogin) {
+  removeGuideBtn();
   const r = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
   if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
   sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
@@ -1165,6 +1311,7 @@ const getRes = () => { try { return JSON.parse(localStorage[RK] || '[]'); } catc
 const putRes = a => { try { localStorage[RK] = JSON.stringify(a); return true; } catch { return false; } };
 function saveRes(d) { if (getRes().some(x => x.rid === d.rid)) return true; return putRes([{ id: Date.now(), rid: d.rid, title: curTitle, date: new Date().toLocaleString('vi-VN'), top: d.top, full: d.full, qs: d.qs }, ...getRes()].slice(0, 15)); }
 async function viewRes(id, srv) {
+  removeGuideBtn();
   let r;
   if (srv) { const x = await fetch('/api/results/' + id, { headers: { 'x-token': tok } }); if (!x.ok) return alert('Không tải được kết quả'); r = await x.json(); r.date = new Date(r.created_at).toLocaleString('vi-VN'); }
   else r = getRes().find(x => x.id === id);
@@ -1178,6 +1325,7 @@ async function delRes(id, srv) {
 window.addEventListener('beforeunload', e => { if (role === 'host' && gameActive) { e.preventDefault(); e.returnValue = ''; } });
 let lobbyList = [];
 s.on('lobby', n => {
+  removeGuideBtn();
   lobbyList = n; if (!$('pl')) return;
   $('pl').innerHTML = n.length ? `<div>${n.length} người chơi</div>` + n.map((x, i) => `<span class="chip ${x.online ? '' : 'dim'}">${esc(x.name)} <a href="#" style="color:#fff" onclick="kick(${i});return false">✕</a></span>`).join('') : 'Chưa có ai';
 });
@@ -1195,6 +1343,7 @@ s.on('hoston', () => { if (role === 'player') $('net').style.display = 'none'; }
 s.on('disconnect', () => { if (role) $('net').style.display = 'block'; });
 let qEnd = 0;
 function drawQ(note) {
+  removeGuideBtn();
   clearInterval(timer); const q = cur;
   const head = `<div class="meta"><span class="pill">Câu ${q.i}/${q.total}</span><span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span></div><div class="tbar"><i id="tb" style="width:100%"></i></div><div class="qcard">${esc(q.q)}</div>`;
   if (role === 'host') h(head + `<div class="grid">${q.options.map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${esc(o)}</div>`).join('')}</div><div id="an" class="big">0 đã trả lời</div>`);
@@ -1202,7 +1351,7 @@ function drawQ(note) {
   timer = setInterval(() => { const t = Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0); if ($('tm')) $('tm').textContent = t; if ($('tb')) $('tb').style.width = Math.max(0, (qEnd - Date.now()) / (q.time * 1000) * 100) + '%'; if (t <= 0) clearInterval(timer); }, 500);
 }
 s.on('question', q => { if ($('smod')) $('smod').remove(); cur = q; qEnd = Date.now() + q.time * 1000; drawQ(); });
-function showSent() { h(`<div class="emoji">✅</div><h1>Đã gửi!</h1><div class="big pulse">Chờ mọi người…</div>`); }
+function showSent() { removeGuideBtn(); h(`<div class="emoji">✅</div><h1>Đã gửi!</h1><div class="big pulse">Chờ mọi người…</div>`); }
 function ans(i) {
   vibrateTap(45);
   document.querySelectorAll('.grid button').forEach(b => b.disabled = true);
@@ -1219,6 +1368,7 @@ const board = (t, me) => {
   return pod + rest;
 };
 s.on('reveal', d => {
+  removeGuideBtn();
   clearInterval(timer); const mx = Math.max(...d.counts, 1), t0 = Date.now();
   if (d.last) fireworks(7000, true);
   h(`<div class="okbar">✔ Đáp án đúng: ${SYM[d.correct]} ${esc(d.options[d.correct])}</div>
@@ -1234,6 +1384,7 @@ s.on('reveal', d => {
   tick(); timer = setInterval(tick, 500);
 });
 s.on('result', r => {
+  removeGuideBtn();
   clearInterval(timer);
   const isLeader = r.rank === 1 && r.score > 0;
   if (isLeader) fireworks(5500, true);
@@ -1247,9 +1398,10 @@ s.on('result', r => {
   const tk = () => { if (!$('pn')) return clearInterval(timer); $('pn').textContent = left0 == null ? 'Chờ host chuyển câu…' : `${lab} ${Math.max(Math.ceil(left0 - (Date.now() - t0) / 1000), 0)}s`; };
   tk(); timer = setInterval(tk, 500);
 });
-s.on('saveStatus', d => { const e = $('sv'); if (e) { e.style.color = d.ok ? '#9f9' : '#ffd602'; e.textContent = d.ok ? '✔ Đã lưu data' : `⚠ Chưa lưu được lên Supabase (${d.msg}). Hệ thống đang thử lại; kết quả vẫn có trong trình duyệt.`; } });
+s.on('saveStatus', d => { const e = $('sv'); if (e) { e.style.color = d.ok ? '#9f9' : '#ffd602'; e.textContent = d.ok ? '✔ Đã lưu data' : `⚠ Chưa lưu được lên database (${d.msg}). Hệ thống đang thử lại; kết quả vẫn có trong trình duyệt.`; } });
 let lastEnd = null;
 function showEnd(d, saved, meta) {
+  removeGuideBtn();
   h(`<h1>🏆 Kết quả</h1>${meta ? `<div>${esc(meta.title)} · ${esc(meta.date)}</div>` : ''}${board(d.full || d.top)}${d.full && !saved ? '<div id="sl" class="er"></div><div id="sv" class="er"></div>' : ''}` +
     (d.full ? `<button onclick="csv()">⬇ Tải bảng điểm (CSV)</button><button class="ghost" onclick="leaveEnd(${saved})">Về trang host</button>` : `<button onclick="location.reload()">Chơi lại</button>`));
 }
