@@ -1,6 +1,6 @@
 {
-  "name": "QuizBlast",
-  "description": "Nền tảng đố vui tương tác thời gian thực nhiều người chơi, hỗ trợ phòng chơi PIN, âm thanh hiệu ứng và bảng điều khiển host.",
+  "name": "Remix kahook",
+  "description": "Imported from GitHub",
   "permissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
