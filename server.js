@@ -257,7 +257,7 @@ function reveal(pin) {
       p.log.push(p.gained);
     }
   });
-  const t5 = top(g, 5);
+  const t5 = top(g, 10);
   list.sort((a, b) => b.score - a.score).forEach((p, i) => {
     p.lastResult = { name: p.name, answered: !!p.ans, correct: !!p.ans && p.ans.idx === q.correct, correctText: q.options[q.correct],
       gained: p.gained, score: p.score, rank: i + 1, total: list.length, top: t5,
