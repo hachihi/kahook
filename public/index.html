@@ -99,6 +99,43 @@ button.ghost{background:#ffffff14;backdrop-filter:blur(4px)}
 
 @media(max-width:600px){body::before,body::after{animation:none}.qcard{font-size:1.25rem}#pin{font-size:1.4rem}.contact-grid{grid-template-columns:1fr;grid-template-rows:auto;grid-auto-flow:row}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ===== Phòng chờ của host: menu gọn + QR / link / PIN lớn ===== */
+.lb{width:min(1180px,96vw);position:relative;left:50%;transform:translateX(-50%);text-align:left;padding-bottom:6px}
+.lb-top{display:flex;align-items:center;gap:14px;margin:6px 0 14px}
+.lb-menu{position:relative}
+.lb-mbtn{width:auto;margin:0;padding:11px 20px;font-size:1.08rem;background:#ffffff26;border:1px solid #ffffff55;box-shadow:none;backdrop-filter:blur(6px);color:#fff;text-shadow:none}
+.lb-mbtn:active:not(:disabled){transform:none;box-shadow:none}
+.lb-dd{position:absolute;left:0;top:calc(100% + 8px);min-width:350px;background:#fff;border-radius:18px;padding:8px;box-shadow:0 18px 40px #0007;z-index:25}
+.lb-dd[hidden]{display:none}
+.lb-dd button{display:flex;align-items:center;gap:12px;white-space:nowrap;width:100%;margin:0;padding:14px 16px;background:none;color:#2a1250;box-shadow:none;border-radius:12px;font-size:1.1rem;text-align:left;text-shadow:none}
+.lb-dd button:hover:not(:disabled){background:#f1eaff;filter:none}
+.lb-dd button:active:not(:disabled){transform:none;box-shadow:none}
+.lb-dd button.danger{color:#e21b3c}
+.lb-dd hr{border:0;border-top:1px solid #e9e2f6;margin:6px 10px}
+.lb-title{font-family:"Baloo 2","Nunito",sans-serif;font-weight:800;font-size:1.5rem}
+.lb-card{display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,40px);align-items:center;background:#ffffff14;border:1px solid #ffffff33;border-radius:26px;padding:clamp(16px,2.4vw,28px)}
+.lb-qr{width:clamp(240px,min(40vw,60vh),560px);background:#fff;border-radius:22px;padding:10px;box-shadow:0 8px 0 #0003,0 18px 36px #0005}
+.lb-qr svg{display:block;width:100%;height:auto;border-radius:12px}
+.lb-qrfail{color:#46178f;padding:30px 10px;text-align:center;font-weight:700}
+.lb-lbl{font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:clamp(.95rem,1.5vw,1.2rem);opacity:.95;margin:6px 0 8px}
+.lb-link{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#2a0f55d9;border-radius:18px;padding:14px 14px 14px 22px;margin-bottom:18px;box-shadow:0 0 0 2px #ffffff22 inset}
+.lb-url{font-size:clamp(1.35rem,3.3vw,2.6rem);font-weight:800;line-height:1.15;word-break:break-all;user-select:all;font-family:"Baloo 2","Nunito",sans-serif;letter-spacing:.3px}
+.lb-copy{width:auto;flex:0 0 auto;margin:0;padding:12px 18px;font-size:1.05rem;background:#ffffff22;border:1px solid #ffffff66;box-shadow:none;white-space:nowrap}
+.lb-copy:active:not(:disabled){transform:none;box-shadow:none}
+.lb .pin.lb-pin{font-size:clamp(3rem,8.2vw,6.6rem);letter-spacing:.16em;padding:clamp(8px,1.6vw,18px) 0 clamp(8px,1.6vw,18px) .16em;text-align:center;line-height:1.1;border-radius:22px;margin:0;font-family:"Baloo 2","Nunito",sans-serif;font-weight:800}
+.lb-note{margin-top:14px;font-size:clamp(1rem,1.5vw,1.2rem);opacity:.95;font-weight:700}
+.lb-warn{margin-top:12px;background:#e21b3c40;border:1px solid #ff8585;border-radius:12px;padding:10px 14px;font-size:.98rem}
+.lb-players{background:#ffffff14;border:1px solid #ffffff33;border-radius:24px;padding:16px 22px;margin-top:16px}
+.lb-ph{display:flex;align-items:center;justify-content:space-between;font-family:"Baloo 2","Nunito",sans-serif;font-weight:800;font-size:1.25rem}
+.lb-badge{background:var(--y);color:#3a1670;border-radius:20px;min-width:38px;padding:2px 12px;text-align:center;font-size:1.1rem}
+.lb-pl{text-align:center;margin-top:8px;min-height:44px;font-weight:700;opacity:.95}
+.lb-pl .chip{font-size:1.1rem}
+.lb-start{position:sticky;bottom:0;padding:26px 0 12px;margin-top:6px;background:linear-gradient(transparent,#1d0a45 55%);z-index:5}
+.lb-start button{margin:0;font-size:1.35rem;padding:16px}
+body:has(.lb) #cbtn,body:has(.lb) #fsbtn{display:none}
+@media(min-width:1700px){.lb{width:min(1500px,94vw)}.lb-qr{width:clamp(240px,min(40vw,62vh),700px)}.lb .pin.lb-pin{font-size:8.2rem}.lb-url{font-size:3rem}.lb-lbl{font-size:1.3rem}.lb-note{font-size:1.3rem}.lb-mbtn{font-size:1.2rem}.lb-title{font-size:1.8rem}}
+@media(max-width:820px){.lb-card{grid-template-columns:1fr;justify-items:center;text-align:center}.lb-qr{width:min(80vw,380px)}.lb-info{width:100%}.lb-link{flex-direction:column;text-align:center;padding:14px}.lb-copy{width:100%}.lb .pin.lb-pin{font-size:clamp(2.6rem,15vw,4.6rem)}.lb-dd{min-width:min(310px,86vw)}}
 </style></head><body><div id="net" style="display:none;position:fixed;top:0;left:0;right:0;background:#e21b3c;padding:6px;font-size:.9rem">Mất kết nối, đang kết nối lại…</div><div id="wrap"><div id="brand"></div><main id="app"></main></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
@@ -492,6 +529,12 @@ function home() {
   <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
   <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
   <button class="ghost" onclick="hostLogin()">Tôi là host </button>`);
+  // Vào bằng QR/link có ?pin=...: điền sẵn PIN, chuyển con trỏ sang ô tên
+  const qp = new URLSearchParams(location.search).get('pin');
+  if (qp && /^\d{6}$/.test(qp) && $('pin')) {
+    $('pin').value = qp; $('nm').focus();
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch {}
+  }
 }
 function join() { doJoin($('pin').value.trim(), $('nm').value, '', false); }
 function doJoin(pin, name, token, silent) {
@@ -630,22 +673,111 @@ async function save() {
     body: JSON.stringify({ title: $('tt').value.trim() || 'Quiz', questions: pending }) });
   if (!r.ok) return $('err').textContent = (await r.json()).err; hostMenu();
 }
+// ---- Tạo mã QR ngay trong trang (không cần thư viện ngoài, chạy được cả khi mạng LAN không có internet) ----
+// Chuẩn QR Model 2, chế độ byte (UTF-8), mức sửa lỗi M, phiên bản 1–10 (tới 213 ký tự)
+function qrSvg(text) {
+  const ECC = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26], NB = [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5];
+  const raw = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; } return r; };
+  const bytes = [...new TextEncoder().encode(text)];
+  let ver = 0;
+  for (let v = 1; v <= 10; v++) { const cap = (Math.floor(raw(v) / 8) - ECC[v] * NB[v]) * 8; if (4 + (v < 10 ? 8 : 16) + bytes.length * 8 <= cap) { ver = v; break; } }
+  if (!ver) return '';
+  const bits = []; const put = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  put(4, 4); put(bytes.length, ver < 10 ? 8 : 16); bytes.forEach(b => put(b, 8));
+  const nData = Math.floor(raw(ver) / 8) - ECC[ver] * NB[ver];
+  put(0, Math.min(4, nData * 8 - bits.length)); while (bits.length % 8) bits.push(0);
+  const data = []; for (let i = 0; i < bits.length; i += 8) data.push(parseInt(bits.slice(i, i + 8).join(''), 2));
+  for (let pad = 0xEC; data.length < nData; pad ^= 0xEC ^ 0x11) data.push(pad);
+  // Reed–Solomon
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };
+  const div = (() => { const d = ECC[ver], r = new Array(d).fill(0); r[d - 1] = 1; let root = 1; for (let i = 0; i < d; i++) { for (let j = 0; j < d; j++) { r[j] = mul(r[j], root); if (j + 1 < d) r[j] ^= r[j + 1]; } root = mul(root, 2); } return r; })();
+  const rem = blk => { const r = div.map(() => 0); for (const b of blk) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => r[i] ^= mul(c, f)); } return r; };
+  const nb = NB[ver], rawCw = Math.floor(raw(ver) / 8), nShort = nb - rawCw % nb, shortLen = Math.floor(rawCw / nb), blocks = [];
+  for (let i = 0, k = 0; i < nb; i++) { const dat = data.slice(k, k + shortLen - ECC[ver] + (i < nShort ? 0 : 1)); k += dat.length; const e = rem(dat); if (i < nShort) dat.push(0); blocks.push(dat.concat(e)); }
+  const cw = []; for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - ECC[ver] || j >= nShort) cw.push(b[i]); });
+  // Ma trận
+  const N = ver * 4 + 17, M = Array.from({ length: N }, () => new Array(N).fill(false)), F = Array.from({ length: N }, () => new Array(N).fill(false));
+  const setF = (x, y, v) => { M[y][x] = v; F[y][x] = true; };
+  for (let i = 0; i < N; i++) { setF(6, i, i % 2 === 0); setF(i, 6, i % 2 === 0); }
+  const finder = (cx, cy) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const d = Math.max(Math.abs(dx), Math.abs(dy)), x = cx + dx, y = cy + dy; if (x >= 0 && x < N && y >= 0 && y < N) setF(x, y, d !== 2 && d !== 4); } };
+  finder(3, 3); finder(N - 4, 3); finder(3, N - 4);
+  const pos = [6]; if (ver > 1) { const na = Math.floor(ver / 7) + 2, step = Math.ceil((ver * 4 + 4) / (na * 2 - 2)) * 2; for (let p = N - 7; pos.length < na; p -= step) pos.splice(1, 0, p); }
+  pos.forEach((py, i) => pos.forEach((px, j) => { if ((i === 0 && j === 0) || (i === 0 && j === pos.length - 1) || (i === pos.length - 1 && j === 0)) return; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) setF(px + dx, py + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); }));
+  const fmt = mask => { const d = mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537); const b = ((d << 10) | r) ^ 0x5412, g = i => ((b >>> i) & 1) === 1;
+    for (let i = 0; i <= 5; i++) setF(8, i, g(i)); setF(8, 7, g(6)); setF(8, 8, g(7)); setF(7, 8, g(8)); for (let i = 9; i < 15; i++) setF(14 - i, 8, g(i));
+    for (let i = 0; i < 8; i++) setF(N - 1 - i, 8, g(i)); for (let i = 8; i < 15; i++) setF(8, N - 15 + i, g(i)); setF(8, N - 8, true); };
+  fmt(0);
+  if (ver >= 7) { let r = ver; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25); const b = (ver << 12) | r; for (let i = 0; i < 18; i++) { const c = ((b >>> i) & 1) === 1, a = N - 11 + i % 3, d = Math.floor(i / 3); setF(a, d, c); setF(d, a, c); } }
+  let bi = 0; for (let right = N - 1; right >= 1; right -= 2) { if (right === 6) right = 5; for (let vert = 0; vert < N; vert++) for (let j = 0; j < 2; j++) { const x = right - j, y = ((right + 1) & 2) === 0 ? N - 1 - vert : vert; if (!F[y][x] && bi < cw.length * 8) { M[y][x] = ((cw[bi >>> 3] >>> (7 - (bi & 7))) & 1) === 1; bi++; } } }
+  const MASK = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, (x, y) => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+    (x, y) => x * y % 2 + x * y % 3 === 0, (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+  const flip = k => { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!F[y][x] && MASK[k](x, y)) M[y][x] = !M[y][x]; };
+  const penalty = () => { let p = 0, dark = 0; const P1 = '10111010000', P2 = '00001011101';
+    const lines = []; for (let y = 0; y < N; y++) { lines.push(M[y].map(v => +v).join('')); lines.push(M.map(r => +r[y]).join('')); }
+    lines.forEach(l => { const runs = l.match(/0+|1+/g); runs.forEach(r => { if (r.length >= 5) p += 3 + r.length - 5; }); for (let i = 0; i + 11 <= l.length; i++) { const w = l.substr(i, 11); if (w === P1 || w === P2) p += 40; } });
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { if (M[y][x]) dark++; if (x < N - 1 && y < N - 1 && M[y][x] === M[y][x + 1] && M[y][x] === M[y + 1][x] && M[y][x] === M[y + 1][x + 1]) p += 3; }
+    return p + Math.floor(Math.abs(dark * 20 - N * N * 10) / (N * N)) * 10; };
+  let best = 0, bp = Infinity; for (let k = 0; k < 8; k++) { flip(k); fmt(k); const p = penalty(); if (p < bp) { bp = p; best = k; } flip(k); }
+  flip(best); fmt(best);
+  // Xuất SVG (có viền trắng 4 ô theo chuẩn)
+  const Q = 4, S = N + Q * 2; let d = '';
+  for (let y = 0; y < N; y++) { let x = 0; while (x < N) { if (!M[y][x]) { x++; continue; } let w = 0; while (x + w < N && M[y][x + w]) w++; d += `M${x + Q} ${y + Q}h${w}v1h-${w}z`; x += w; } }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" shape-rendering="crispEdges" role="img" aria-label="Mã QR vào phòng"><rect width="${S}" height="${S}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+
+// ---- Phòng chờ của host ----
+const joinUrl = pin => location.origin + '/?pin=' + encodeURIComponent(pin);   // link có sẵn PIN (QR và nút Sao chép dùng link này)
+function lbMenu(open) {
+  const d = $('lbDd'); if (!d) return;
+  d.hidden = open === undefined ? !d.hidden : !open;
+  if ($('lbMenuBtn')) $('lbMenuBtn').setAttribute('aria-expanded', String(!d.hidden));
+}
+function lbAct(a) {
+  lbMenu(false);
+  if (a === 'set') openRoomSettings(); else if (a === 'fs') toggleFullScreen(); else if (a === 'cancel') cancelRoom();
+}
+document.addEventListener('click', e => { const d = $('lbDd'); if (d && !d.hidden && !e.target.closest('.lb-menu')) d.hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') lbMenu(false); });
+async function copyJoin() {
+  const u = joinUrl(curPin);
+  try { await navigator.clipboard.writeText(u); }
+  catch { const t = document.createElement('textarea'); t.value = u; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
+  const b = $('lbCopy'); if (b) { b.textContent = '✔ Đã sao chép'; setTimeout(() => { if ($('lbCopy')) $('lbCopy').textContent = '📋 Sao chép'; }, 1600); }
+}
 function hostLobby(pin) {
   curPin = pin;
   cancelRoomBtn();
   fullscreenBtn();
-  const isFs = isFullScreen();
-  h(`<div class="sub" style="margin-top:18px">Mở trang này trên điện thoại và nhập mã PIN</div>
-  <div class="pin">${pin}</div>
-  <div id="pl" class="big">Chưa có ai</div>
-  <button onclick="startGame()" style="font-size:1.25rem;padding:15px">▶ Bắt đầu</button>
-  <button id="btnFsLobby" class="ghost" onclick="toggleFullScreen()" style="border-color:#26d0ce;color:#26d0ce;font-size:1.05rem;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">
-    <span id="btnFsIcon" style="font-size:1.2rem">${isFs ? '🗗' : '⛶'}</span>
-    <span id="btnFsText">${isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu'}</span>
-  </button>
-  <div class="two" style="margin-top:10px">
-    <button class="ghost" onclick="openRoomSettings()" style="border-color:#ffd602;color:#ffd602;font-size:1.05rem">⚙ Sửa cài đặt</button>
-    <button class="ghost" onclick="cancelRoom()" style="border-color:#ff4d4d;color:#ff8585;font-size:1.05rem">✕ Hủy phòng</button>
+  const isFs = isFullScreen(), qr = qrSvg(joinUrl(pin)), local = /^(localhost|127\.|\[?::1)/.test(location.hostname);
+  h(`<div class="lb">
+    <div class="lb-top">
+      <div class="lb-menu">
+        <button id="lbMenuBtn" class="lb-mbtn" aria-haspopup="true" aria-expanded="false" onclick="lbMenu()">☰ Menu</button>
+        <div id="lbDd" class="lb-dd" hidden>
+          <button onclick="lbAct('set')"><span>⚙</span><span>Sửa cài đặt phòng</span></button>
+          <button onclick="lbAct('fs')"><span id="btnFsIcon">${isFs ? '🗗' : '⛶'}</span><span id="btnFsText">${isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu'}</span></button>
+          <hr>
+          <button class="danger" onclick="lbAct('cancel')"><span>✕</span><span>Hủy phòng</span></button>
+        </div>
+      </div>
+      <div class="lb-title">🎮 Phòng chờ</div>
+    </div>
+    <div class="lb-card">
+      <div class="lb-qr">${qr || '<div class="lb-qrfail">Link quá dài để tạo QR.<br>Hãy dùng link và mã PIN bên cạnh.</div>'}</div>
+      <div class="lb-info">
+        <div class="lb-lbl">📱 Quét QR hoặc mở link</div>
+        <div class="lb-link"><span class="lb-url">${esc(location.host)}</span><button id="lbCopy" class="lb-copy" onclick="copyJoin()">📋 Sao chép</button></div>
+        <div class="lb-lbl">🔑 Mã PIN</div>
+        <div class="pin lb-pin">${esc(pin)}</div>
+        <div class="lb-note">PIN đã gắn sẵn trong link/QR, người chơi chỉ cần nhập tên.</div>
+        ${local ? '<div class="lb-warn">⚠ Bạn đang mở bằng <b>localhost</b> nên điện thoại sẽ không vào được. Hãy mở trang host bằng địa chỉ IP của máy (ví dụ 192.168.x.x:3000) hoặc link trên mạng.</div>' : ''}
+      </div>
+    </div>
+    <div class="lb-players">
+      <div class="lb-ph"><span>👥 Người chơi</span><span id="plCount" class="lb-badge">0</span></div>
+      <div id="pl" class="lb-pl">Chưa có ai · quét QR để vào phòng</div>
+    </div>
+    <div class="lb-start"><button onclick="startGame()">▶ Bắt đầu</button></div>
   </div>`);
 }
 function startGame() { s.emit('host:start', r => { if (r && r.err) alert(r.err); }); }
@@ -1344,7 +1476,8 @@ let lobbyList = [];
 s.on('lobby', n => {
   removeGuideBtn();
   lobbyList = n; if (!$('pl')) return;
-  $('pl').innerHTML = n.length ? `<div>${n.length} người chơi</div>` + n.map((x, i) => `<span class="chip ${x.online ? '' : 'dim'}">${esc(x.name)} <a href="#" style="color:#fff" onclick="kick(${i});return false">✕</a></span>`).join('') : 'Chưa có ai';
+  if ($('plCount')) $('plCount').textContent = n.length;
+  $('pl').innerHTML = n.length ? n.map((x, i) => `<span class="chip ${x.online ? '' : 'dim'}">${esc(x.name)} <a href="#" style="color:#fff" onclick="kick(${i});return false">✕</a></span>`).join('') : 'Chưa có ai · quét QR để vào phòng';
 });
 async function kick(i) { if (lobbyList[i] && await ask('Đuổi ' + esc(lobbyList[i].name) + ' khỏi phòng?')) s.emit('host:kick', lobbyList[i].key); }
 s.on('kicked', () => { localStorage.removeItem('qb'); role = ''; alert('Bạn đã bị host mời ra khỏi phòng'); home(); });
