@@ -526,7 +526,7 @@ function home() {
   role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh');
   guideBtn();
   h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
-  <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
+  <div class="card"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="30">
   <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
   <button class="ghost" onclick="hostLogin()">Tôi là host </button>`);
   // Vào bằng QR/link có ?pin=...: điền sẵn PIN, chuyển con trỏ sang ô tên
