@@ -368,7 +368,7 @@ io.on('connection', s => {
     r({ ok: 1, settings: settingsOf(g) });
   });
   s.on('player:join', ({ pin, name, token } = {}, cb) => {
-    const g = games[pin]; name = String(name || '').trim().slice(0, 20);
+    const g = games[pin]; name = String(name || '').trim().slice(0, 30);
     if (!g) return cb({ err: 'PIN không đúng' });
     if (!name) return cb({ err: 'Hãy nhập tên' });
     const key = name.toLowerCase(); let p = g.players[key];
