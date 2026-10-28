@@ -726,8 +726,9 @@ function qrSvg(text) {
 }
 
 // ---- Phòng chờ của host ----
-const joinUrl = pin => location.origin + '/?pin=' + encodeURIComponent(pin);   // link có sẵn PIN (QR và nút Sao chép dùng link này)
-function lbMenu(open) {
+//const joinUrl = pin => location.origin + '/?pin=' + encodeURIComponent(pin);   // link có sẵn PIN (QR và nút Sao chép dùng link này)
+const joinUrl = pin => 'http://kahoot.hachihi.vn/?pin=' + encodeURIComponent(pin);
+  function lbMenu(open) {
   const d = $('lbDd'); if (!d) return;
   d.hidden = open === undefined ? !d.hidden : !open;
   if ($('lbMenuBtn')) $('lbMenuBtn').setAttribute('aria-expanded', String(!d.hidden));
