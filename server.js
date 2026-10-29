@@ -133,8 +133,14 @@ function clean(qs) {
 }
 app.get('/api/quizzes', auth, async (_, res) => {
   if (!sb) return res.json(mem.map(({ id, title }) => ({ id, title })));
-  const { data } = await sb.from('quizzes').select('id,title').order('created_at', { ascending: false }).limit(100);
-  res.json(data || []);
+  try {
+    const { data, error } = await sb.from('quizzes').select('id,title').order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.warn('[AI Studio] Supabase get quizzes error, falling back to in-memory:', err && err.message);
+    res.json(mem.map(({ id, title }) => ({ id, title })));
+  }
 });
 app.post('/api/quizzes', auth, async (req, res) => {
   const title = String((req.body || {}).title || '').trim(), c = clean((req.body || {}).questions);
@@ -142,9 +148,16 @@ app.post('/api/quizzes', auth, async (req, res) => {
   if (c.err) return res.status(400).json({ err: c.err });
   const questions = c.qs;
   if (!sb) { const id = String(Date.now()); mem.push({ id, title, questions }); return res.json({ id }); }
-  const { data, error } = await sb.from('quizzes').insert({ title, questions }).select('id').single();
-  if (error) return res.status(500).json({ err: error.message });
-  res.json({ id: data.id });
+  try {
+    const { data, error } = await sb.from('quizzes').insert({ title, questions }).select('id').single();
+    if (error) throw error;
+    res.json({ id: data.id });
+  } catch (err) {
+    console.warn('[AI Studio] Supabase insert quiz error, falling back to in-memory:', err && err.message);
+    const id = String(Date.now());
+    mem.push({ id, title, questions });
+    res.json({ id });
+  }
 });
 app.get('/api/sheet', auth, async (req, res) => {
   const url = String(req.query.url || ''), m = /\/d\/([\w-]+)/.exec(url), gid = /[#&?]gid=(\d+)/.exec(url);
@@ -157,24 +170,39 @@ app.get('/api/sheet', auth, async (req, res) => {
 });
 async function getQuiz(id) {
   if (!sb) return mem.find(x => x.id === id);
-  const { data } = await sb.from('quizzes').select('*').eq('id', id).single();
-  return data;
+  try {
+    const { data, error } = await sb.from('quizzes').select('*').eq('id', id).single();
+    if (error || !data) return mem.find(x => x.id === id);
+    return data;
+  } catch {
+    return mem.find(x => x.id === id);
+  }
 }
 // ---------- lịch sử kết quả (Supabase) ----------
 app.get('/api/results', auth, async (_, res) => {
   if (!sb) return res.json({ enabled: false });
-  const { data, error } = await sb.from('results').select('id,title,players,created_at').order('created_at', { ascending: false }).limit(50);
-  if (error) return res.json({ enabled: false });
-  res.json({ enabled: true, items: data });
+  try {
+    const { data, error } = await sb.from('results').select('id,title,players,created_at').order('created_at', { ascending: false }).limit(50);
+    if (error) return res.json({ enabled: false });
+    res.json({ enabled: true, items: data });
+  } catch {
+    res.json({ enabled: false });
+  }
 });
 app.get('/api/results/:id', auth, async (req, res) => {
   if (!sb) return res.status(404).end();
-  const { data } = await sb.from('results').select('*').eq('id', req.params.id).single();
-  if (!data) return res.status(404).end();
-  res.json({ ...data.data, title: data.title, created_at: data.created_at });
+  try {
+    const { data, error } = await sb.from('results').select('*').eq('id', req.params.id).single();
+    if (error || !data) return res.status(404).end();
+    res.json({ ...data.data, title: data.title, created_at: data.created_at });
+  } catch {
+    res.status(404).end();
+  }
 });
 app.delete('/api/results/:id', auth, async (req, res) => {
-  if (sb) await sb.from('results').delete().eq('id', req.params.id);
+  if (sb) {
+    try { await sb.from('results').delete().eq('id', req.params.id); } catch {}
+  }
   res.json({ ok: 1 });
 });
 async function saveResult(g, data, attempt = 1) {

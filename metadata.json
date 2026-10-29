@@ -1,6 +1,6 @@
 {
   "name": "Remix kahook",
-  "description": "Imported from GitHub",
+  "description": "QuizBlast - Trò chơi trắc nghiệm tương tác thời gian thực với phòng chờ, âm nhạc và bảng xếp hạng.",
   "permissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
