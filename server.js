@@ -3,8 +3,8 @@ const { Server } = require('socket.io');
 const app = express(), server = http.createServer(app), io = new Server(server, { maxHttpBufferSize: 2e6 });
 const PASS = process.env.HOST_PASS || 'admin';
 const MAX_PLAYERS = 100, HOST_GRACE = 180000;
-if (!process.env.HOST_PASS) console.log('HOST_PASS chưa đặt: dùng mật khẩu mặc định là "admin"');
-app.use(express.json({ limit: '1mb' }));
+const jsonSmall = express.json({ limit: '1mb' }), jsonBig = express.json({ limit: '40mb' });
+app.use((req, res, next) => req.path === '/api/profiles' ? next() : jsonSmall(req, res, next));
 
 // ---------- file tĩnh ----------
 // ---------- file tĩnh & âm thanh ----------
@@ -178,6 +178,22 @@ async function getQuiz(id) {
     return mem.find(x => x.id === id);
   }
 }
+// ---------- Profile phòng chơi (lưu trong data/profiles.json) ----------
+const DATA = path.join(__dirname, 'data');
+fs.mkdirSync(DATA, { recursive: true });
+const loadJson = (f, d) => { try { return JSON.parse(fs.readFileSync(path.join(DATA, f), 'utf8')); } catch { return d; } };
+const saveJson = (f, v) => {
+  const tmp = path.join(DATA, f + '.tmp'); fs.writeFileSync(tmp, JSON.stringify(v)); fs.renameSync(tmp, path.join(DATA, f));
+};
+let profiles = loadJson('profiles.json', []);
+if (!Array.isArray(profiles)) profiles = [];
+app.get('/api/profiles', auth, (_, res) => res.json(profiles));
+app.put('/api/profiles', auth, jsonBig, (req, res) => {
+  if (!Array.isArray(req.body)) return res.status(400).json({ err: 'Dữ liệu không hợp lệ' });
+  try { profiles = req.body.slice(0, 200); saveJson('profiles.json', profiles); res.json({ ok: 1 }); }
+  catch (e) { res.status(500).json({ err: String(e.message || e) }); }
+});
+
 // ---------- lịch sử kết quả (Supabase) ----------
 app.get('/api/results', auth, async (_, res) => {
   if (!sb) return res.json({ enabled: false });
@@ -236,6 +252,19 @@ const clamp = (v, a, b, d) => { v = Number(v); return Number.isFinite(v) ? Math.
 const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const plist = g => Object.values(g.players);
 const top = (g, n) => plist(g).sort((a, b) => b.score - a.score).slice(0, n).map(p => ({ name: p.name, score: p.score }));
+// Kiểu banner (vị trí, cỡ chữ, font, màu...) do host chỉnh trong trình thiết kế giao diện
+const BR_FONTS = ['baloo','nunito','bevn','mont','oswald','play','paci','lobster','dancing','bangers'];
+function cleanStyle(st) {
+  if (!st || typeof st !== 'object') return null;
+  const num = (v, lo, hi, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  const col = (v, d) => /^#[0-9a-f]{6}$/i.test(v || '') ? v : d;
+  const txt = (e, d) => { e = e && typeof e === 'object' ? e : {}; return { x: num(e.x, 0, 100, d.x), y: num(e.y, 0, 100, d.y), s: num(e.s, 1, 14, d.s),
+    f: BR_FONTS.includes(e.f) ? e.f : d.f, w: [400, 600, 700, 800, 900].includes(Number(e.w)) ? Number(e.w) : d.w, c: col(e.c, d.c), i: e.i ? 1 : 0 }; };
+  const l = st.l && typeof st.l === 'object' ? st.l : {};
+  return { h: num(st.h, 6, 40, 14), bg: col(st.bg, '#000000'), ba: num(st.ba, 0, 100, 40), bw: num(st.bw, 0, 12, 4),
+    t: txt(st.t, { x: 50, y: 36, s: 5, f: 'baloo', w: 800, c: '#ffffff' }), s: txt(st.s, { x: 50, y: 72, s: 3.2, f: 'nunito', w: 600, c: '#ffffff' }),
+    l: { x: num(l.x, 0, 100, 9), y: num(l.y, 0, 100, 50), s: num(l.s, 2, 40, 9) } };
+}
 const brandFor = g => (g.brand && (g.brand.title || g.brand.sub || g.logoBuf)) ? { ...g.brand, logo: g.logoBuf ? `/logo/${g.pin}?v=${g.ver || g.created}` : '' } : null;
 const lobby = g => plist(g).map(p => ({ key: p.key, name: p.name, online: p.online }));
 const qFor = (g, p, time) => {
@@ -328,7 +357,7 @@ io.on('connection', s => {
     const m = typeof o.bg === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(o.bg);
     if (m) { const buf = Buffer.from(m[2], 'base64'); if (buf.length < 350000) { g.bgBuf = buf; g.bgType = m[1]; } }
     const b = o.brand || {};
-    g.brand = { title: String(b.title || '').slice(0, 80), sub: String(b.sub || '').slice(0, 120), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602' };
+    g.brand = { title: String(b.title || '').slice(0, 80), sub: String(b.sub || '').slice(0, 120), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602', style: cleanStyle(b.style) };
     const lm = typeof b.logo === 'string' && /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(b.logo);
     if (lm) { const buf = Buffer.from(lm[2], 'base64'); if (buf.length < 200000) { g.logoBuf = buf; g.logoType = lm[1]; } }
     s.join(pin); s.data.pin = pin; cb({ pin, htoken: g.htoken });
@@ -387,7 +416,7 @@ io.on('connection', s => {
     if (o.shuffleA !== undefined) g.shuffleA = !!o.shuffleA;
     if (bg !== undefined) { g.bgBuf = bg ? bg.buf : null; g.bgType = bg ? bg.type : null; }
     if (b) {
-      g.brand = { title: String(b.title || '').slice(0, 80), sub: String(b.sub || '').slice(0, 120), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602' };
+      g.brand = { title: String(b.title || '').slice(0, 80), sub: String(b.sub || '').slice(0, 120), color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602', style: cleanStyle(b.style) };
       if (logo !== undefined) { g.logoBuf = logo ? logo.buf : null; g.logoType = logo ? logo.type : null; }
     }
     if (bg !== undefined || logo !== undefined) g.ver = Date.now();

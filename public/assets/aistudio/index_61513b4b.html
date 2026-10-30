@@ -1,0 +1,1599 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>QuizBlast</title>
+<meta name="description" content="QuizBlast - Đố vui, thi đua, bứt phá. Trò chơi trắc nghiệm tương tác thời gian thực.">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#46178f;color:#fff;min-height:100vh;display:flex;justify-content:center}
+main{width:100%;max-width:760px;padding:20px;text-align:center}h1{font-size:2.4rem;margin:.6em 0}
+.card{background:#fff;color:#222;border-radius:12px;padding:18px;margin:12px 0;text-align:left}
+input,textarea,select{width:100%;padding:12px;margin:6px 0;border:2px solid #ccc;border-radius:8px;font-size:1rem}
+button{background:#1368ce;color:#fff;border:0;border-radius:8px;padding:14px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;margin:6px 0;width:100%}
+button.ghost{background:transparent;border:2px solid #fff}button.sm{width:auto;padding:8px 14px}
+.pin{font-size:4rem;font-weight:900;letter-spacing:.15em;background:#fff;color:#46178f;border-radius:12px;padding:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.grid button{height:110px;font-size:1.2rem;margin:0}
+.ans-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s ease,filter .12s}
+.ans-btn:active{transform:scale(0.96) translateY(2px)!important;filter:brightness(1.15)!important}
+.big{font-size:1.6rem;font-weight:700;margin:16px 0}.chip{display:inline-block;background:#fff3;border-radius:20px;padding:6px 14px;margin:4px}
+.row{display:flex;justify-content:space-between;background:#fff;color:#222;border-radius:8px;padding:10px 14px;margin:6px 0}
+.bar{display:inline-block;height:14px;background:#fff;border-radius:7px;vertical-align:middle}.dim{opacity:.35}
+.er{color:#e21b3c;margin-top:6px}.row.me{outline:3px solid #ffd602}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ck{display:block;margin:8px 0}small{display:block;color:#666;margin:6px 0}h2{margin:18px 0 6px}.ok{background:#26890c}.bad{background:#e21b3c}.panel{border-radius:12px;padding:26px;margin-top:30px}
+.mod{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}.box{background:#fff;color:#222;border-radius:12px;padding:22px;max-width:360px;width:100%;text-align:center}.box button.ghost{color:#555;border-color:#aaa}input[type=range]{padding:0}body{text-shadow:0 1px 3px #0006}.card,.row,.box{text-shadow:none}
+#wrap{width:100%;max-width:760px}.brand{display:flex;align-items:center;justify-content:center;gap:14px;background:#0006;border-bottom:4px solid #ffd602;border-radius:12px;padding:12px 18px;margin:12px 20px 0;text-align:center}.brand .btx{flex:0 1 auto;min-width:0;max-width:100%;text-align:center}.brand .bt,.brand .bs{text-align:center;overflow-wrap:anywhere}.brand img{max-height:64px;max-width:130px;object-fit:contain}.brand .bt{font-size:1.4rem;font-weight:800;line-height:1.2}.brand .bs{opacity:.92;margin-top:2px}.pvw{position:fixed;inset:0;z-index:15;background-color:#46178f;background-size:cover;background-position:center;background-attachment:fixed;overflow:auto;padding:12px;color:#fff;cursor:pointer;text-align:center}
+
+/* ===== Giao diện nâng cấp ===== */
+body{background:radial-gradient(1200px 600px at 50% -10%,#7b2ff7aa,transparent),linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45);background-attachment:fixed;font-family:"Segoe UI",system-ui,Roboto,sans-serif}
+h1{font-weight:900;letter-spacing:.5px;text-shadow:0 3px 0 #0004}
+.card{border-radius:18px;box-shadow:0 8px 0 #0003,0 14px 30px #0004}
+button{border-radius:14px;box-shadow:0 5px 0 #0003;transition:transform .08s,filter .15s}
+button:hover:not(:disabled){filter:brightness(1.08)}button:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #0003}button:disabled{opacity:.55;cursor:not-allowed}
+input,select,textarea{border-radius:12px;font-family:inherit}
+.pin{font-size:clamp(2.6rem,12vw,4.6rem);border-radius:18px;box-shadow:0 8px 0 #0003}
+.grid button,.grid .panel{border-radius:16px;font-weight:800;box-shadow:0 6px 0 #0003}
+.chip{background:#ffffff26;border:1px solid #ffffff40;font-weight:600}
+.tbar{height:12px;background:#0004;border-radius:8px;overflow:hidden;margin:10px 0}.tbar i{display:block;height:100%;background:linear-gradient(90deg,#26d07c,#ffd602 60%,#e21b3c);transition:width .5s linear}
+.panel{animation:pop .35s ease-out}@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.pod{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:18px 0 10px}
+.pod>div{flex:1;max-width:200px;text-align:center}
+.pod .nm{font-weight:800;margin-bottom:4px;word-break:break-word;font-size:.95rem}.pod .pt{font-weight:700;opacity:.9;margin-bottom:4px}
+.pod .bar2{border-radius:12px 12px 0 0;display:flex;align-items:flex-start;justify-content:center;font-size:2rem;padding-top:6px;box-shadow:0 -4px 0 #fff3 inset}
+.pod .p1 .bar2{height:130px;background:linear-gradient(#ffd602,#c99a00)}.pod .p2 .bar2{height:96px;background:linear-gradient(#d9dde3,#9aa3ad)}.pod .p3 .bar2{height:70px;background:linear-gradient(#e0975a,#a0602b)}
+.pod .me .nm{color:#ffd602;text-decoration:underline}
+@media(max-width:480px){main{padding:12px}.grid button,.grid .panel{height:92px;font-size:1.02rem}.big{font-size:1.35rem}.brand{margin:8px 8px 0}.brand .bt{font-size:1.1rem}.brand img{max-height:48px;max-width:90px}.row{padding:8px 10px}}
+@media(min-width:1000px){#wrap{max-width:980px}main{max-width:none}.grid button,.grid .panel{height:140px;font-size:1.5rem}.big{font-size:2rem}}
+
+/* ===== Giao diện v3: vui vẻ - chuyên nghiệp ===== */
+:root{--p:#46178f;--y:#ffd602;--pink:#ff4d8d;--teal:#26d0ce}
+body{font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:600}
+h1,h2,.big,.pin,.logo,button,.brand .bt,.pod .nm{font-family:"Baloo 2","Nunito","Segoe UI",system-ui,sans-serif}
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.32;pointer-events:none;will-change:transform}
+body::before{width:420px;height:420px;background:var(--pink);left:-140px;top:8%;animation:float 14s ease-in-out infinite}
+body::after{width:480px;height:480px;background:var(--teal);right:-170px;bottom:-90px;animation:float 18s ease-in-out infinite reverse}
+@keyframes float{50%{transform:translate(40px,-50px) scale(1.12)}}
+.logo{font-size:clamp(2.6rem,11vw,4rem);font-weight:800;margin:.5em 0 0;letter-spacing:1px;text-shadow:0 4px 0 #0005}
+.logo span{color:var(--y)}.logo .bolt{display:inline-block;animation:zap 2.4s ease-in-out infinite}
+@keyframes zap{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.18)}}
+.sub{opacity:.9;margin:0 0 14px;font-weight:700;letter-spacing:.5px}
+.emoji{font-size:4.5rem;line-height:1;margin-top:26px;animation:bounce 1.6s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}@keyframes pulse{50%{opacity:.45}}
+.card{background:#fffffff2;border-radius:20px;padding:20px}
+.card>b{display:block;font-family:"Baloo 2",sans-serif;font-size:1.15rem;color:var(--p);margin:12px 0 4px}.card>b:first-child{margin-top:0}
+.card input,.card select,.card textarea{border:2px solid #e3dcf3;background:#faf8ff}.card input:focus,.card select:focus{outline:none;border-color:#7b2ff7;box-shadow:0 0 0 4px #7b2ff733}
+#pin{font-size:1.6rem;text-align:center;letter-spacing:.3em;font-weight:800}
+button{background:linear-gradient(#2a7de1,#1368ce);font-weight:800;letter-spacing:.3px}
+button.cta{background:linear-gradient(#ffe24d,#ffc400);color:#3a1670;font-size:1.25rem}
+button.ghost{background:#ffffff14;backdrop-filter:blur(4px)}
+.pin{background:linear-gradient(#fff,#efe7ff);color:var(--p);border:4px solid var(--y);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 8px 0 #0003,0 0 36px #ffd60288}}
+.chip{animation:popin .35s cubic-bezier(.3,1.6,.5,1) both;padding:7px 16px;font-size:1.05rem}
+@keyframes popin{0%{transform:scale(0)}100%{transform:scale(1)}}
+.grid button,.grid .panel{display:flex;align-items:center;justify-content:flex-start;gap:12px;text-align:left;padding:14px 18px;background-image:linear-gradient(#ffffff2e,#00000026)!important;border:0}
+.grid button:hover:not(:disabled){transform:translateY(-3px) scale(1.02)}
+.qcard{background:#fff;color:#2a1250;border-radius:20px;padding:18px 16px;margin:12px 0;font-family:"Baloo 2","Nunito",sans-serif;font-weight:800;font-size:clamp(1.3rem,4.6vw,2rem);line-height:1.25;box-shadow:0 8px 0 #0003,0 14px 30px #0004;text-shadow:none;animation:popin .4s ease-out both}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{background:#0006;border-radius:30px;padding:5px 16px;font-weight:800;font-size:1.05rem}.pill.t{background:var(--y);color:#3a1670;min-width:70px}
+.okbar{background:linear-gradient(#2fc45a,#1f9d44);border-radius:14px;padding:12px 14px;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:1.3rem;margin:12px 0;box-shadow:0 5px 0 #0003}
+.row{border-radius:12px;font-weight:800;box-shadow:0 3px 0 #0002;animation:slidein .35s ease-out both}
+@keyframes slidein{0%{transform:translateX(-18px);opacity:0}100%{transform:none;opacity:1}}
+.panel.ok{background:linear-gradient(#2fc45a,#1a8a3a)}.panel.bad{background:linear-gradient(#f0405a,#b8122e)}
+.panel.ok h1{animation:bounce .9s ease-in-out 3}.panel.bad{animation:shake .5s ease-out}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.pod .bar2{animation:rise .9s cubic-bezier(.2,1.2,.4,1) both;transform-origin:bottom}@keyframes rise{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+.pod .p1 .nm{font-size:1.15rem}
+.er{font-weight:700}
+@media(max-width:480px){body::before,body::after{animation:none}.qcard{font-size:1.25rem}#pin{font-size:1.4rem}}
+
+/* ===== Giao diện người chơi trên điện thoại: đáp án lấp đầy màn hình ===== */
+#wrap{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+main.fillp{flex:1;display:flex;flex-direction:column;padding:8px 10px calc(12px + env(safe-area-inset-bottom))}
+.pscreen{flex:1;display:flex;flex-direction:column;min-height:0}
+body.pplay .brand{padding:6px 12px;margin:8px 10px 0;border-bottom-width:3px}
+body.pplay .brand img{max-height:30px;max-width:60px}
+body.pplay .brand .bs{display:none}
+.pmeta{align-items:stretch}
+.pmeta .pill{font-size:1.3rem;padding:6px 18px;display:flex;align-items:center}
+.pmeta .pill.t{min-width:104px;justify-content:center;font-size:1.7rem;line-height:1;transition:background .2s,color .2s}
+.pmeta .pill.t.low{background:#e21b3c;color:#fff;animation:pulse .7s ease-in-out infinite}
+.ptbar{height:14px;border-radius:10px;margin:8px 0}
+.pq{font-size:clamp(1.3rem,5.6vw,1.9rem)!important;line-height:1.28;padding:14px 14px!important;margin:4px 0 10px!important;border-radius:18px!important;box-shadow:0 5px 0 #0003!important}
+.pq.long{font-size:clamp(1.1rem,4.7vw,1.4rem)!important}
+.grid.pgrid{flex:1;display:flex;flex-direction:column;gap:10px;margin:0}
+.grid.pgrid button{flex:1 1 0;font-size:var(--fs,1.4rem)}
+.grid.pgrid button:hover:not(:disabled){transform:none!important;filter:none}
+.grid.pgrid button{height:auto;min-height:76px;padding:10px 14px;gap:14px;border-radius:18px;box-shadow:0 6px 0 #0004;text-align:left;font-weight:800;line-height:1.22;word-break:break-word;align-items:center;user-select:none;-webkit-user-select:none}
+.grid.pgrid button .sy{flex:none;width:52px;height:52px;border-radius:14px;background:#0000003a;display:grid;place-items:center;font-size:1.7rem}
+.grid.pgrid button .tx{flex:1;min-width:0}
+.grid.pgrid button:active:not(:disabled){transform:translateY(4px) scale(.985)!important;box-shadow:0 2px 0 #0004}
+.grid.pgrid button:disabled{opacity:.6}
+.psent{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:10px 0}
+.psent .pick{border-radius:22px;padding:22px 18px;display:flex;align-items:center;gap:14px;text-align:left;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:clamp(1.3rem,5.6vw,1.8rem);line-height:1.25;box-shadow:0 7px 0 #0004;background-image:linear-gradient(#ffffff2e,#00000026)}
+.psent .pick .sy{flex:none;width:54px;height:54px;border-radius:14px;background:#0000003a;display:grid;place-items:center;font-size:1.8rem}
+.psent .pick small{display:block;color:#fff;opacity:.85;font-size:.9rem;font-weight:700;margin:0 0 2px;font-family:"Nunito",sans-serif}
+.psent h1{font-size:clamp(2rem,8.5vw,2.8rem);margin:.2em 0 0}
+.psent .big{font-size:clamp(1.3rem,5.4vw,1.7rem);margin:4px 0}
+.pwait{padding:34px 8px}.pwait h1{font-size:clamp(2.2rem,9vw,3rem)}.pwait .big{font-size:clamp(1.5rem,6vw,2rem)}.pwait .sub{font-size:1.2rem}
+.pres h1{font-size:clamp(2.4rem,10vw,3.4rem)}.pres .big{font-size:clamp(1.5rem,6.2vw,2rem)}.pres .panel div{font-size:1.25rem}
+.pres .row{font-size:1.2rem;padding:13px 14px}.pres .pod .nm{font-size:1.1rem}.pres .pod .pt{font-size:1.15rem}
+.pjoin input{font-size:1.4rem;padding:16px 14px;min-height:58px}.pjoin #pin{font-size:1.9rem}
+.pjoin button.cta{font-size:1.5rem;padding:18px;min-height:64px}.pjoin .er{font-size:1.1rem}
+@media(max-height:700px){body.pplay .brand{display:none}.grid.pgrid button{font-size:calc(var(--fs,1.4rem)*.86);min-height:64px}.grid.pgrid button .sy{width:42px;height:42px;font-size:1.4rem}.pq{font-size:clamp(1.1rem,4.8vw,1.5rem)!important}.pmeta .pill{font-size:1.15rem}.pmeta .pill.t{font-size:1.4rem}}
+@media(min-width:700px){.grid.pgrid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr}main.fillp{max-width:760px;margin:0 auto;width:100%}}
+@media(orientation:landscape) and (max-height:520px){.grid.pgrid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr}.grid.pgrid button{min-height:56px}.grid.pgrid button .sy{width:40px;height:40px;font-size:1.3rem}.pq{font-size:1.1rem!important;padding:8px 12px!important}}
+
+/* ===== Banner thiết kế được (kéo thả) + trình chỉnh sửa ===== */
+.brand.dz{display:block;position:relative;padding:0;overflow:hidden;gap:0;text-align:left;--u:3px}
+.brand.dz .bel{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;line-height:1.12;margin:0;text-align:center;text-shadow:0 2px 4px #0005;pointer-events:none}
+.brand.dz img.bel{height:auto;max-width:none;max-height:none;object-fit:contain;text-shadow:none}
+.brand.dz .bel.ph{opacity:.45;font-style:italic}
+.brand.dz.ed .bel{pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;outline:2px dashed transparent;outline-offset:4px;border-radius:4px}
+.brand.dz.ed .bel:hover{outline-color:#ffffff99}
+.brand.dz.ed .bel.sel{outline:2px solid var(--y)}
+.brand.dz.ed .bel[contenteditable=true]{cursor:text;user-select:text;-webkit-user-select:text;outline:2px solid var(--teal);background:#0006}
+.brand.dz .guide{position:absolute;background:var(--teal);pointer-events:none;opacity:0;transition:opacity .1s}
+.brand.dz .guide.v{left:50%;top:0;bottom:0;width:1px}.brand.dz .guide.h{top:50%;left:0;right:0;height:1px}
+.dzov{position:fixed;inset:0;z-index:15;background:linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45);background-size:cover;background-position:center;color:#fff;display:flex;flex-direction:column;text-align:left}
+.dz-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#0009;backdrop-filter:blur(6px);z-index:2}
+.dz-top button,.dz-panel button{width:auto;margin:0;padding:8px 14px;font-size:.95rem;box-shadow:none;border-radius:10px;background:#ffffff22;border:1px solid #ffffff44;color:#fff;font-weight:800;cursor:pointer}
+.dz-top button.on,.dz-panel button.on{background:var(--y);color:#3a1670;border-color:var(--y)}
+.dz-seg{display:flex;gap:6px}.dz-hint{flex:1;opacity:.8;font-size:.88rem;min-width:200px}.dz-act{display:flex;gap:8px;flex-wrap:wrap}
+#dzSave{background:#26c45a;border-color:#26c45a}
+.dz-stage{flex:1;overflow:auto;padding:14px 10px 24px;display:flex;justify-content:center;align-items:flex-start}
+.dz-frame.host{width:min(980px,100%);text-align:center}
+.dz-frame.host main{padding:20px;max-width:none;text-align:center}
+.dz-frame.phone{width:410px;max-width:100%;border:10px solid #15102b;border-radius:36px;overflow:hidden;box-shadow:0 12px 40px #000a;text-align:center}
+.dz-frame.phone .brand{margin:8px 10px 0}
+.dz-if{display:block;width:100%;height:560px;border:0;background:transparent;pointer-events:none}
+.dz-panel{background:#150a35;border-top:2px solid #ffffff33;padding:10px 14px calc(12px + env(safe-area-inset-bottom));max-height:42vh;overflow:auto;z-index:2}
+.dz-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dz-ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.dz-ctl label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:800;opacity:.95}
+.dz-ctl label.w2{grid-column:span 2}
+.dz-ctl input,.dz-ctl select{margin:0;padding:8px 10px;font-size:.95rem;border-radius:10px;border:2px solid #ffffff33;background:#ffffff14;color:#fff;width:100%}
+.dz-ctl select option{color:#222}
+.dz-ctl input[type=color]{padding:2px;height:38px;width:60px;flex:none;cursor:pointer}
+.dz-ctl input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--y);height:28px}
+.dz-ctl .rw{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dz-ctl .rw input[type=range]{flex:1;min-width:90px}
+.dz-ctl b{color:var(--y)}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;display:inline-block;flex:none}
+@media(max-width:640px){.dz-ctl label.w2{grid-column:auto}.dz-hint{display:none}.dz-panel{max-height:48vh}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style></head><body><div id="net" style="display:none;position:fixed;top:0;left:0;right:0;background:#e21b3c;padding:6px;font-size:.9rem">Mất kết nối, đang kết nối lại…</div><div id="wrap"><div id="brand"></div><main id="app"></main></div>
+<script src="/vendor/xlsx.full.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s = io(), $ = id => document.getElementById(id), app = $('app');
+const COL = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'], SYM = ['▲', '◆', '●', '■'];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const h = html => { app.classList.remove('fillp'); document.body.classList.remove('pplay'); app.innerHTML = html; };
+// Bỏ tiền tố "A. ", "B) " ở đầu đáp án (đáp án bị xáo trộn nên nhãn chữ dễ gây nhầm; đã có ký hiệu hình)
+const otx = o => esc(String(o).replace(/^\s*[A-Da-d][\.\):]\s+/, ''));
+let role = '', timer, cur = null, tok = '', pending = null, pendingName = '', cachedQuizzes = [], cachedSounds = [], curPin = '', curRoomSettings = null;
+
+async function fetchSounds() {
+  try {
+    const r = await fetch('/api/sounds');
+    if (r.ok) cachedSounds = await r.json();
+  } catch {}
+}
+
+function renderMusicOptions(selectedVal) {
+  let html = `<option value="none" ${selectedVal === 'none' ? 'selected' : ''}>🔇 Không nhạc</option>`;
+  if (cachedSounds && cachedSounds.length) {
+    cachedSounds.forEach(s => {
+      if (s.name === 'applause') return;
+      const isSel = selectedVal === s.filename || selectedVal === s.name || (selectedVal && selectedVal.replace(/\.\w+$/, '') === s.name);
+      html += `<option value="${esc(s.filename)}" ${isSel ? 'selected' : ''}>${esc(s.label || s.filename)}</option>`;
+    });
+  } else {
+    html += `<option value="vui.wav" ${selectedVal === 'vui' || selectedVal === 'vui.wav' ? 'selected' : ''}>🎉 Vui nhộn</option>`;
+    html += `<option value="hoihop.wav" ${selectedVal === 'hoihop' || selectedVal === 'hoihop.wav' ? 'selected' : ''}>⏱ Hồi hộp</option>`;
+  }
+  html += `<option value="custom" ${selectedVal === 'custom' ? 'selected' : ''}>📁 Tải file nhạc của bạn…</option>`;
+  return html;
+}
+
+const PK = 'qb_profiles';
+let activeProfileId = '';
+let profCache = [];
+function getProfiles() { return profCache; }
+// Đọc profile từ máy host; lần đầu thì chuyển profile cũ trong trình duyệt (nếu có) lên máy host
+async function loadProfiles() {
+  let arr = null;
+  try { const r = await fetch('/api/profiles', { headers: { 'x-token': tok } }); if (r.ok) arr = await r.json(); } catch {}
+  if (!Array.isArray(arr)) arr = profCache;
+  if (!arr.length) { try { const old = JSON.parse(localStorage[PK] || '[]'); if (Array.isArray(old) && old.length) { arr = old; profCache = arr; await pushProfiles(); } } catch {} }
+  profCache = arr;
+}
+let profSaving = Promise.resolve();
+function pushProfiles() {
+  profSaving = profSaving.then(async () => {
+    try {
+      const r = await fetch('/api/profiles', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-token': tok }, body: JSON.stringify(profCache) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).err || r.status);
+    } catch (e) { showToast('Không lưu được profile lên máy host: ' + e.message, true); }
+  });
+  return profSaving;
+}
+function putProfiles(arr) { profCache = arr; pushProfiles(); return true; }
+function renderProfileOptions(selectedId) {
+  const profs = getProfiles();
+  const opts = [`<option value="">-- Chọn profile đã lưu để áp dụng nhanh --</option>`];
+  profs.forEach(p => {
+    opts.push(`<option value="${esc(p.id)}" ${p.id === selectedId ? 'selected' : ''}>${esc(p.name)} (${esc(p.quizTitle || 'Quiz')})</option>`);
+  });
+  return opts.join('');
+}
+function showToast(msg, isErr = false) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${isErr ? '#e21b3c' : '#26890c'};color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99;box-shadow:0 6px 16px #0004;animation:pop .3s ease-out`;
+  t.innerHTML = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+function askInput(title, defaultValue = '') {
+  return new Promise(resolve => {
+    const d = document.createElement('div');
+    d.className = 'mod';
+    d.innerHTML = `
+      <div class="box" style="max-width:400px;text-align:left;padding:22px;border-radius:18px">
+        <h3 style="margin:0 0 10px;color:var(--p);font-family:'Baloo 2',sans-serif;font-size:1.3rem">${esc(title)}</h3>
+        <input id="promptVal" value="${esc(defaultValue)}" placeholder="Nhập tên profile..." style="margin-bottom:14px">
+        <div style="display:flex;gap:10px">
+          <button id="pOk" style="flex:1">Lưu</button>
+          <button id="pCancel" class="ghost" style="flex:1;color:#555;border-color:#aaa">Hủy</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(d);
+    const inp = d.querySelector('#promptVal');
+    inp.focus(); inp.select();
+    const done = val => { d.remove(); resolve(val); };
+    d.querySelector('#pOk').onclick = () => done(inp.value.trim());
+    d.querySelector('#pCancel').onclick = () => done(null);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') done(inp.value.trim());
+      if (e.key === 'Escape') done(null);
+    });
+  });
+}
+function onSelectProfile(id) {
+  if (!id) {
+    activeProfileId = '';
+    if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
+    if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
+    if ($('profNote')) $('profNote').textContent = '';
+    return;
+  }
+  const profs = getProfiles();
+  const p = profs.find(x => x.id === id);
+  if (p) applyProfile(p);
+}
+function applyProfile(p) {
+  if (!p) return;
+  activeProfileId = p.id;
+  if ($('qz')) {
+    for (let opt of $('qz').options) {
+      if (opt.value === p.quizId) { $('qz').value = p.quizId; break; }
+    }
+  }
+  if ($('au')) $('au').checked = !!p.auto;
+  if ($('sq')) $('sq').checked = !!p.shuffleQ;
+  if ($('sa')) $('sa').checked = p.shuffleA !== false;
+  if ($('wt')) $('wt').value = p.wait ?? 10;
+  if ($('mn')) $('mn').value = p.min ?? 5;
+  if ($('mu')) {
+    let matched = false;
+    for (let opt of $('mu').options) {
+      if (opt.value === p.music || opt.value.replace(/\.\w+$/, '') === (p.music || '').replace(/\.\w+$/, '')) {
+        $('mu').value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && p.music) $('mu').value = p.music;
+    if ($('muf')) $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none';
+  }
+  if ($('vol')) $('vol').value = p.vol ?? 50;
+  bgData = p.bgData || ''; refreshBg();
+  if ($('bt')) $('bt').value = (p.brand && p.brand.title) || '';
+  if ($('bs')) $('bs').value = (p.brand && p.brand.sub) || '';
+  if ($('bc')) $('bc').value = (p.brand && p.brand.color) || '#ffd602';
+  brandStyle = (p.brand && p.brand.style) || null;
+  logoData = p.logoData || ''; refreshLogo();
+  try {
+    localStorage.qb_set = JSON.stringify({ music: p.music || 'vui', vol: p.vol ?? 50 });
+    localStorage.qb_brand = JSON.stringify(p.brand || {});
+    localStorage.qb_bg = bgData;
+    localStorage.qb_logo = logoData;
+  } catch {}
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
+  if ($('profNote')) {
+    $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã nạp profile: <b>${esc(p.name)}</b></span> · Bộ câu hỏi: ${esc(p.quizTitle || 'Quiz')} · Chờ: ${p.wait}s · Nhạc: ${p.music}`;
+  }
+  showToast(`✔ Đã nạp Profile "${p.name}"! Tất cả cài đặt đã sẵn sàng.`);
+}
+async function saveAsNewProfile() {
+  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
+  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  if (!name) return;
+  const profs = getProfiles();
+  const newProfile = {
+    id: 'prof_' + Date.now(),
+    name,
+    createdAt: Date.now(),
+    quizId: $('qz') ? $('qz').value : '',
+    quizTitle: currentTitle,
+    auto: $('au') ? $('au').checked : true,
+    shuffleQ: $('sq') ? $('sq').checked : false,
+    shuffleA: $('sa') ? $('sa').checked : true,
+    wait: $('wt') ? Number($('wt').value) || 10 : 10,
+    min: $('mn') ? Number($('mn').value) || 5 : 5,
+    music: $('mu') ? $('mu').value : 'vui',
+    vol: $('vol') ? Number($('vol').value) : 50,
+    bgData: bgData || '',
+    brand: readBrand(),
+    logoData: logoData || ''
+  };
+  profs.unshift(newProfile);
+  putProfiles(profs);
+  activeProfileId = newProfile.id;
+  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions(newProfile.id);
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'inline-block';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'inline-block';
+  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã lưu profile mới: <b>${esc(newProfile.name)}</b></span>`;
+  showToast(`✔ Đã lưu Profile "${name}" thành công!`);
+}
+async function updateCurrentProfile() {
+  if (!activeProfileId) return;
+  const profs = getProfiles();
+  const idx = profs.findIndex(p => p.id === activeProfileId);
+  if (idx < 0) return;
+  const current = profs[idx];
+  const ok = await ask(`Cập nhật toàn bộ cài đặt hiện tại vào Profile "<b>${esc(current.name)}</b>"?`, 'Cập nhật', 'Hủy');
+  if (!ok) return;
+  const currentTitle = (($('qz') && $('qz').selectedOptions[0]) || {}).text || current.quizTitle || 'Quiz';
+  profs[idx] = {
+    ...current,
+    quizId: $('qz') ? $('qz').value : current.quizId,
+    quizTitle: currentTitle,
+    auto: $('au') ? $('au').checked : current.auto,
+    shuffleQ: $('sq') ? $('sq').checked : current.shuffleQ,
+    shuffleA: $('sa') ? $('sa').checked : current.shuffleA,
+    wait: $('wt') ? Number($('wt').value) || 10 : current.wait,
+    min: $('mn') ? Number($('mn').value) || 5 : current.min,
+    music: $('mu') ? $('mu').value : current.music,
+    vol: $('vol') ? Number($('vol').value) : current.vol,
+    bgData: bgData || '',
+    brand: readBrand(),
+    logoData: logoData || '',
+    updatedAt: Date.now()
+  };
+  putProfiles(profs);
+  if ($('profNote')) $('profNote').innerHTML = `<span style="color:#26890c;font-weight:700">✔ Đã cập nhật profile: <b>${esc(current.name)}</b></span>`;
+  showToast(`✔ Đã cập nhật Profile "${current.name}"!`);
+}
+async function deleteCurrentProfile() {
+  if (!activeProfileId) return;
+  const profs = getProfiles();
+  const p = profs.find(x => x.id === activeProfileId);
+  if (!p) return;
+  const ok = await ask(`Bạn có chắc muốn xoá Profile "<b>${esc(p.name)}</b>"?`, 'Xoá Profile', 'Giữ lại');
+  if (!ok) return;
+  const filtered = profs.filter(x => x.id !== activeProfileId);
+  putProfiles(filtered);
+  activeProfileId = '';
+  if ($('selProfile')) $('selProfile').innerHTML = renderProfileOptions('');
+  if ($('btnUpdateProf')) $('btnUpdateProf').style.display = 'none';
+  if ($('btnDelProf')) $('btnDelProf').style.display = 'none';
+  if ($('profNote')) $('profNote').textContent = 'Đã xoá profile.';
+  showToast(`✔ Đã xoá Profile "${p.name}".`);
+}
+function ensureDefaultProfile(qs) {
+  const profs = getProfiles();
+  if (profs.length === 0 && qs && qs.length) {
+    const firstQ = qs[0];
+    const def = {
+      id: 'prof_default',
+      name: 'Mẫu chuẩn: ' + firstQ.title,
+      createdAt: Date.now(),
+      quizId: firstQ.id,
+      quizTitle: firstQ.title,
+      auto: true,
+      shuffleQ: false,
+      shuffleA: true,
+      wait: 10,
+      min: 5,
+      music: 'vui',
+      vol: 50,
+      bgData: '',
+      brand: { title: '', sub: '', color: '#ffd602' },
+      logoData: ''
+    };
+    profs.push(def);
+    putProfiles(profs);
+  }
+}
+
+function home() {
+  role = ''; gameActive = false; stopMusic(); if (activeFireworksCleanup) activeFireworksCleanup(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove(); sessionStorage.removeItem('qbp'); sessionStorage.removeItem('qbh'); h(`<div class="logo"><span class="bolt">⚡Hachihi.vn QuizBlast</span></div><div class="sub">Đố vui · Thi đua · Bứt phá</div>
+  <div class="card pjoin"><input id="pin" placeholder="Mã PIN" inputmode="numeric"><input id="nm" placeholder="Tên của bạn" maxlength="20">
+  <button class="cta" onclick="join()">🚀 Vào chơi</button><div id="err" class="er"></div></div>
+  <button class="ghost" onclick="hostLogin()">Tôi là host </button>`);
+  const qp = (new URLSearchParams(location.search).get('pin') || '').replace(/\D/g, '').slice(0, 6);
+  if (qp && $('pin')) { $('pin').value = qp; $('nm').focus(); }
+}
+function join() { doJoin($('pin').value.trim(), $('nm').value, '', false); }
+function doJoin(pin, name, token, silent) {
+  s.emit('player:join', { pin, name, token }, r => {
+    if (r.err) {
+      if (silent) { localStorage.removeItem('qb'); role = ''; if (r.err !== 'PIN không đúng') alert('Không vào lại được phòng: ' + r.err); home(); }
+      else $('err').textContent = r.err;
+      return;
+    }
+    role = 'player'; localStorage.qb = JSON.stringify({ pin, name: r.name, token: r.token, t: Date.now() });
+    if (r.state === 'lobby') h(`<div class="pwait"><div class="emoji">🎮</div><h1>Bạn đã vào phòng!</h1><div class="big pulse">Chờ host bắt đầu…</div><div class="sub">Nhìn lên màn hình xem tên mình nhé 👀</div></div>`);
+  });
+}
+function hostLogin() {
+  h(`<h1>Đăng nhập host</h1><div class="card"><input id="pw" type="password" placeholder="Mật khẩu host">
+  <button onclick="doLogin()">Đăng nhập</button><div id="err" class="er"></div></div><button class="ghost" onclick="home()">← Quay lại</button>`);
+  $('pw').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+}
+async function doLogin() {
+  const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pass: $('pw').value }) });
+  const d = await r.json(); if (!r.ok) return $('err').textContent = d.err;
+  tok = d.token; await hostMenu(true);
+}
+async function hostMenu(fromLogin) {
+  const r = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
+  if (!r.ok) { sessionStorage.removeItem('qbp'); hostLogin(); return; }
+  sessionStorage.qbp = tok; sessionStorage.removeItem('qbh'); stopMusic(); setBg(''); setBrand(null); if ($('snd')) $('snd').remove(); if ($('fsbtn')) $('fsbtn').remove(); if ($('cbtn')) $('cbtn').remove(); if ($('smod')) $('smod').remove();
+  const qs = await r.json(); pending = null; cachedQuizzes = qs;
+  await fetchSounds();
+  await loadProfiles();
+  ensureDefaultProfile(qs);
+  let rr = { enabled: false };
+  try { rr = await (await fetch('/api/results', { headers: { 'x-token': tok } })).json(); } catch {}
+  const items = rr.enabled ? (rr.items || []).map(x => ({ srv: 1, id: x.id, title: x.title, date: new Date(x.created_at).toLocaleString('vi-VN'), n: x.players }))
+    : getRes().map(x => ({ srv: 0, id: x.id, title: x.title, date: x.date, n: x.full.length }));
+  const resHtml = `<div class="card"><b>📁 Kết quả đã lưu ${rr.enabled ? '(lưu trên máy host)' : '(trong trình duyệt này)'}</b>${items.length ? items.map(x => `<div class="row" style="margin:6px 0"><span>${esc(x.title)}<br><small>${esc(x.date)} · ${x.n} người</small></span><span><button class="sm" onclick="viewRes(${x.id},${x.srv})">Xem</button> <button class="sm" style="background:#e21b3c" onclick="delRes(${x.id},${x.srv})">Xoá</button></span></div>`).join('') : '<small>Chưa có kết quả nào.</small>'}</div>`;
+  const stInit = JSON.parse(localStorage.qb_set || '{}');
+  h(`<h1>Bảng điều khiển host</h1>
+  <div class="card" style="background:linear-gradient(135deg,#fbf9ff,#f1e9ff);border:2px solid #7b2ff7;box-shadow:0 6px 18px #7b2ff726">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <b style="font-size:1.15rem;color:var(--p);margin:0">⭐ Mẫu cấu hình sẵn (Profile)</b>
+      <span style="font-size:0.85rem;color:#666">Lưu trọn gói: câu hỏi, trộn câu, thời gian, âm thanh, hình nền, logo. Lưu trên máy host.</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+      <select id="selProfile" style="flex:2;min-width:210px;margin:0" onchange="onSelectProfile(this.value)">
+        ${renderProfileOptions(activeProfileId)}
+      </select>
+      <button type="button" class="sm" onclick="playProfile()" style="background:#e21b3c;white-space:nowrap;margin:0">🚀 Chơi ngay</button>
+      <button type="button" class="sm" onclick="saveAsNewProfile()" style="background:#26890c;white-space:nowrap;margin:0">💾 Lưu làm Profile mới</button>
+      <button type="button" class="sm" id="btnUpdateProf" onclick="updateCurrentProfile()" style="background:#1368ce;white-space:nowrap;margin:0;display:${activeProfileId ? 'inline-block' : 'none'}">✏ Cập nhật</button>
+      <button type="button" class="sm" id="btnDelProf" onclick="deleteCurrentProfile()" style="background:#e21b3c;white-space:nowrap;margin:0;display:${activeProfileId ? 'inline-block' : 'none'}">🗑 Xoá</button>
+    </div>
+    <div id="profNote" style="font-size:0.85rem;color:#555;margin-top:8px"></div>
+  </div>
+  <div class="card"><b>1. Chọn bộ câu hỏi</b><select id="qz">${qs.map(q => `<option value="${esc(q.id)}">${esc(q.title)}</option>`).join('')}</select>
+  <b>2. Cài đặt qua câu</b>
+  <label class="ck"><input type="checkbox" id="au" checked> Tự động qua câu khi hết thời gian chờ</label>
+  <label class="ck"><input type="checkbox" id="sq"> Xáo trộn thứ tự câu hỏi</label><label class="ck"><input type="checkbox" id="sa" checked> Xáo trộn vị trí đáp án (mỗi người chơi một kiểu khác nhau)</label>
+  <div class="two"><div>Thời gian chờ tự qua (giây)<input id="wt" type="number" value="10" min="0" max="120"></div>
+  <div>Tối thiểu trước khi bấm qua được (giây)<input id="mn" type="number" value="5" min="0" max="60"></div></div>
+  <small>Bỏ chọn tự động = chỉ qua câu khi host bấm nút (sau thời gian tối thiểu).</small>
+  <b>3. Nhạc nền &amp; hình nền</b>
+  <select id="mu">${renderMusicOptions(stInit.music || 'vui.wav')}</select>
+  <input type="file" id="muf" accept="audio/*" style="display:none">
+  <div class="two"><div>Âm lượng<input type="range" id="vol" min="0" max="100" value="50"></div><div><br><button class="sm" onclick="previewMusic()">▶ Nghe thử / dừng</button></div></div>
+  <div>Hình nền (hiện trên cả máy người chơi)<input type="file" id="bgf" accept="image/*" onchange="loadBg(this.files[0])"><small id="bgs"></small></div>
+  <small>Nhạc phát trên máy host. Tự động nạp toàn bộ file MP3/WAV từ thư mục nhạc.</small>
+  <b>4. Banner sự kiện (hiện trên mọi màn hình)</b>
+ 
+  <input id="bt" value="HACHIHI EVENT " placeholder="Tên chương trình / sự kiện (VD: HCH EVENT 2026)" maxlength="80">
+  <input id="bs" value="Chào mừng các bạn đến với event hachihi.vn" placeholder="Dòng chào (VD: Chào mừng các bạn đến với …)" maxlength="120">
+  <div class="two"><div>Màu nhấn<input type="color" id="bc" value="#ffd602" style="height:46px;padding:2px"></div>
+  <div>Logo (PNG/JPG, tự thu nhỏ)<input type="file" id="blf" accept="image/*" onchange="loadLogo(this.files[0])"><small id="bls"></small></div></div>
+  <button class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="openBrandEditor()">🎨 Xem / sửa giao diện (kéo thả tiêu đề, font, cỡ chữ, màu)</button>
+  <button onclick="create()">Tạo phòng</button></div>
+  ${resHtml}
+  <div class="card"><b>Nạp câu hỏi mới</b><small>Cột A: câu hỏi · B,C,D,E: đáp án A,B,C,D · F: đáp án đúng (A/B/C/D) · G (tuỳ chọn): số giây</small>
+  <input type="file" id="fl" accept=".xlsx,.xls,.csv" onchange="loadFile(this.files[0])">
+  <div id="pv"></div><div id="err" class="er"></div></div>
+  <button class="ghost" onclick="home()">Thoát</button>`);
+  const st = JSON.parse(localStorage.qb_set || '{}');
+  if (st.music && st.music !== 'custom') {
+    for (let opt of $('mu').options) {
+      if (opt.value === st.music || opt.value.replace(/\.\w+$/, '') === st.music.replace(/\.\w+$/, '')) {
+        $('mu').value = opt.value;
+        break;
+      }
+    }
+  }
+  if (st.vol != null) $('vol').value = st.vol;
+  $('mu').onchange = () => { $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none'; };
+  $('muf').onchange = e => { if (e.target.files[0]) customUrl = URL.createObjectURL(e.target.files[0]); };
+  bgData = localStorage.qb_bg || ''; refreshBg();
+  const bs = JSON.parse(localStorage.qb_brand || '{}'); $('bt').value = bs.title || ''; $('bs').value = bs.sub || ''; $('bc').value = bs.color || '#ffd602'; brandStyle = bs.style || null;
+  logoData = localStorage.qb_logo || ''; refreshLogo();
+}
+function toQuestions(rows) {
+  const qs = [], bad = [];
+  rows.forEach((r, i) => {
+    r = r.map(x => String(x ?? '').trim()); if (!r[0]) return;
+    const o = r.slice(1, 5); while (o.length && !o[o.length - 1]) o.pop();
+    const raw = (r[5] || '').toLowerCase(); let c = -1;
+    if (/^[a-d]$/.test(raw)) c = 'abcd'.indexOf(raw); else if (/^[1-4]$/.test(raw)) c = +raw - 1; else c = o.findIndex(x => x.toLowerCase() === raw);
+    if (o.length < 2 || c < 0 || c >= o.length || !o[c]) { if (i > 0) bad.push(i + 1); return; }
+    const t = Number(r[6]); qs.push({ q: r[0], options: o, correct: c, time: t >= 5 && t <= 120 ? Math.round(t) : 20 });
+  });
+  return { qs, bad };
+}
+function showPending(rows, name) {
+  const { qs, bad } = toQuestions(rows);
+  if (!qs.length) { $('pv').innerHTML = ''; return $('err').textContent = 'Không đọc được câu hỏi nào. Kiểm tra lại định dạng cột.'; }
+  pending = qs; $('err').textContent = '';
+  $('pv').innerHTML = `<div class="big" style="font-size:1.1rem">Đọc được ${qs.length} câu${bad.length ? ` — bỏ qua ${bad.length} dòng lỗi (dòng ${bad.slice(0, 8).join(', ')}${bad.length > 8 ? '…' : ''}), hãy kiểm tra cột F` : ''}. Câu đầu: ${esc(qs[0].q)}</div>
+  <input id="tt" placeholder="Tên bộ câu hỏi" value="${esc(name)}"><button onclick="save()">Lưu bộ câu hỏi</button>`;
+}
+async function loadFile(f) {
+  if (!f) return;
+  try { const wb = XLSX.read(await f.arrayBuffer()); showPending(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' }), f.name.replace(/\.\w+$/, '')); }
+  catch { $('err').textContent = 'Không đọc được file'; }
+}
+async function save() {
+  const r = await fetch('/api/quizzes', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-token': tok },
+    body: JSON.stringify({ title: $('tt').value.trim() || 'Quiz', questions: pending }) });
+  if (!r.ok) return $('err').textContent = (await r.json()).err; hostMenu();
+}
+function hostLobby(pin) {
+  curPin = pin; joinFull = '';
+  cancelRoomBtn();
+  fullscreenBtn();
+  const glass = 'background:#ffffff1f;border:1px solid #ffffff33;border-radius:20px';
+  const lab = 'font-weight:800;letter-spacing:.06em;font-size:clamp(.95rem,1.6vw,1.25rem);opacity:.95';
+  h(`<style>.lobby #pl .chip{font-size:1.15rem;padding:8px 16px;font-weight:700}.lobby #pl{max-height:20vh;overflow:auto}@media(max-width:1100px){body:has(#cbtn) #wrap{padding-top:52px}}
+</style>
+  <div class="lobby" style="width:min(1400px,calc(100vw - 32px));position:relative;left:50%;transform:translateX(-50%)">
+    <div style="font-weight:800;font-size:1.2rem;margin:6px 0 10px">🎮 Phòng chờ</div>
+    <div style="${glass};padding:clamp(12px,min(2.2vw,3vh),28px);display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,40px);align-items:center;justify-content:center">
+      <img id="qrimg" alt="QR" style="width:min(46vh,max(44vw,280px),560px);height:auto;aspect-ratio:1;background:#fff;border-radius:20px;padding:10px;box-shadow:0 8px 0 #0003;display:none">
+      <div style="flex:1 1 320px;min-width:0;text-align:left">
+        <div style="${lab}">📱 QUÉT QR HOẶC MỞ LINK</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#0006;border-radius:16px;padding:12px 14px;margin:8px 0 14px">
+          <div id="joinurl" style="flex:1 1 240px;min-width:0;font-weight:800;font-size:clamp(1.3rem,min(3vw,4.6vh),2.6rem);line-height:1.2;overflow-wrap:anywhere">Đang lấy địa chỉ mạng…</div>
+          <button id="copybtn" type="button" class="sm ghost" onclick="copyJoinUrl()" title="Sao chép link đã kèm sẵn PIN để gửi qua Zalo/nhóm" style="margin:0;white-space:nowrap;font-size:.9rem;padding:7px 12px;border-width:1px">📋 Sao chép link</button>
+        </div>
+        <select id="ipsel" style="display:none;margin:-6px 0 12px" onchange="setJoinUrl(this.value)"></select>
+        <div style="${lab}">🔑 MÃ PIN</div>
+        <div class="pin" style="font-size:clamp(2.8rem,min(9vw,12vh),6.4rem);line-height:1.05;margin:6px 0 8px;text-align:center;padding:clamp(6px,1.4vh,18px)">${pin}</div>
+        <div class="sub" style="font-size:clamp(.9rem,1.4vw,1.1rem)">PIN đã gắn sẵn trong link/QR, người chơi chỉ cần nhập tên</div>
+      </div>
+    </div>
+    <div style="${glass};padding:10px 18px;margin:10px 0">
+      <div id="pl" style="font-size:1.15rem;font-weight:700">Chưa có ai · quét QR để vào phòng</div>
+    </div>
+    <button onclick="startGame()" style="font-size:1.35rem;padding:14px">▶ Bắt đầu</button>
+  </div>`);
+  window.scrollTo(0, 0);   // màn hình trước dài nên trang có thể đang cuộn xuống
+  loadJoinInfo();
+}
+let joinFull = '';
+function copyJoinUrl() {
+  const u = joinFull;
+  if (!/^https?:\/\//.test(u)) return;
+  const done = () => { const b = $('copybtn'); if (b) { b.textContent = '✔ Đã chép'; setTimeout(() => { if ($('copybtn')) $('copybtn').textContent = '📋 Sao chép link'; }, 1500); } };
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = u; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch {} ta.remove(); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(u).then(done, fallback); else fallback();
+}
+let lanInfo = null;
+function setJoinUrl(ip) {
+  joinFull = `http://${ip}:${lanInfo.port}/?pin=${curPin}`;   // link đầy đủ (kèm PIN) dùng cho QR và nút sao chép
+  if ($('joinurl')) $('joinurl').textContent = `http://${ip}:${lanInfo.port}`;   // link ngắn cho người chơi gõ tay
+  if ($('qrimg')) { $('qrimg').src = '/api/qr?u=' + encodeURIComponent(joinFull); $('qrimg').style.display = ''; }
+}
+async function loadJoinInfo() {
+  try { lanInfo = await (await fetch('/api/lan')).json(); } catch { lanInfo = null; }
+  if (!$('joinurl')) return;
+  if (!lanInfo || !lanInfo.ips.length) { $('joinurl').textContent = 'Chưa có địa chỉ LAN — hãy nối wifi/dây mạng hoặc bật hotspot rồi tạo lại phòng'; return; }
+  // Nếu host đang mở trang bằng một IP LAN thì ưu tiên đúng IP đó
+  const ips = lanInfo.ips, i = Math.max(0, ips.findIndex(x => x.ip === location.hostname));
+  const sel = $('ipsel');
+  if (ips.length > 1) { sel.innerHTML = ips.map((x, k) => `<option value="${x.ip}" ${k === i ? 'selected' : ''}>${x.ip} (${esc(x.name)})</option>`).join(''); sel.style.display = ''; }
+  setJoinUrl(ips[i].ip);
+}
+function startGame() { s.emit('host:start', r => { if (r && r.err) alert(r.err); }); }
+function hostRejoin(v, silent) {
+  curPin = v.pin;
+  s.emit('host:rejoin', { pin: v.pin, htoken: v.htoken, token: tok }, r => {
+    if (r.err) { sessionStorage.removeItem('qbh'); role = ''; gameActive = false; if (!silent) return; alert('Không vào lại được phòng: ' + r.err); return hostMenu(); }
+    role = 'host'; gameActive = true; curTitle = v.title; soundBtn(); fullscreenBtn(); cancelRoomBtn(); if (v.bg) setBg(localStorage.qb_bg || '');
+    if (r.state === 'lobby') hostLobby(v.pin);
+  });
+}
+function cancelRoomBtn() {
+  if ($('cbtn')) return;
+  const w = document.createElement('div'); w.id = 'cbtn';
+  w.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9;text-align:left';
+  const it = 'box-shadow:none;transform:none;display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:10px 14px;background:transparent;color:#2a1260;border:0;border-radius:8px;font-size:.95rem;font-weight:800;cursor:pointer;text-align:left';
+  w.innerHTML = `<button type="button" id="menubtn" class="sm" style="margin:0;background:#ffffff26;border:1px solid #ffffff55;color:#fff;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer">☰ Menu</button>
+    <div id="menudd" style="display:none;margin-top:6px;min-width:230px;background:#fff;border-radius:14px;padding:6px;box-shadow:0 10px 30px #0006">
+      <button type="button" id="mi-set" style="${it}" onclick="menuDo('set')">⚙ Sửa cài đặt phòng</button>
+      <button type="button" style="${it}" onclick="menuDo('fs')"><span id="btnFsIcon">${isFullScreen() ? '🗗' : '⛶'}</span><span id="btnFsText">${isFullScreen() ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu'}</span></button>
+      <div style="height:1px;background:#0002;margin:4px 8px"></div>
+      <button type="button" style="${it};color:#e21b3c" onclick="menuDo('cancel')">✕ Hủy phòng</button>
+    </div>`;
+  document.body.appendChild(w);
+  $('menubtn').onclick = e => { e.stopPropagation(); const d = $('menudd'); const open = d.style.display === 'none';
+    if (open) $('mi-set').style.display = $('joinurl') ? 'flex' : 'none';   // "Sửa cài đặt" chỉ có ở phòng chờ
+    d.style.display = open ? 'block' : 'none'; };
+}
+function menuDo(act) {
+  if ($('menudd')) $('menudd').style.display = 'none';
+  if (act === 'set') openRoomSettings(); else if (act === 'fs') toggleFullScreen(); else if (act === 'cancel') cancelRoom();
+}
+document.addEventListener('click', e => { const d = $('menudd'); if (d && d.style.display !== 'none' && !d.contains(e.target)) d.style.display = 'none'; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('menudd')) $('menudd').style.display = 'none'; });
+async function cancelRoom() {
+  const confirmed = await ask('Bạn có chắc chắn muốn hủy phòng chơi này không?<br><small style="color:#888;margin-top:6px;display:block">Mã PIN sẽ bị hủy và tất cả người chơi sẽ rời phòng.</small>', 'Đồng ý hủy', 'Giữ lại');
+  if (!confirmed) return;
+  s.emit('host:close', {}, () => {});
+  sessionStorage.removeItem('qbh');
+  gameActive = false;
+  role = '';
+  stopMusic();
+  if (activeFireworksCleanup) activeFireworksCleanup();
+  setBg('');
+  setBrand(null);
+  if ($('snd')) $('snd').remove();
+  if ($('fsbtn')) $('fsbtn').remove();
+  if ($('cbtn')) $('cbtn').remove();
+  if ($('smod')) $('smod').remove();
+  hostMenu();
+}
+async function openRoomSettings() {
+  if (role !== 'host') return;
+  if (!cachedQuizzes || !cachedQuizzes.length) {
+    try {
+      const res = await fetch('/api/quizzes', { headers: { 'x-token': tok } });
+      if (res.ok) cachedQuizzes = await res.json();
+    } catch {}
+  }
+  if (!cachedSounds || !cachedSounds.length) await fetchSounds();
+  if ($('smod')) $('smod').remove();
+  const st = curRoomSettings || {};
+  if (st.brand && st.brand.style) brandStyle = st.brand.style;
+  const d = document.createElement('div');
+  d.id = 'smod';
+  d.className = 'mod';
+  d.innerHTML = `
+    <div class="box" style="max-width:540px;text-align:left;max-height:85vh;overflow-y:auto;padding:22px;border-radius:18px">
+      <h2 style="margin:0 0 10px;color:var(--p);font-size:1.45rem">⚙ Cài đặt tham số phòng</h2>
+      <div style="font-size:0.92rem;color:#666;margin-bottom:12px">Mã phòng: <b style="color:var(--p)">${curPin || ''}</b> · Chưa bắt đầu chơi, bạn có thể chỉnh sửa mọi cài đặt.</div>
+      
+      <div style="background:#f4efff;padding:10px 14px;border-radius:12px;margin-bottom:14px;border:1px solid #d4c2fc">
+        <b style="color:var(--p);font-size:0.95rem;display:block;margin-bottom:6px">⭐ Nạp nhanh từ Profile có sẵn:</b>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <select id="m_prof" style="margin:0;padding:8px;flex:2;min-width:180px" onchange="onModalSelectProfile(this.value)">
+            ${renderProfileOptions('')}
+          </select>
+          <button type="button" class="sm" onclick="saveModalAsProfile()" style="background:#26890c;white-space:nowrap;padding:6px 12px;margin:0">💾 Lưu làm Profile</button>
+        </div>
+      </div>
+
+      <b style="color:var(--p);display:block;margin:10px 0 4px">1. Bộ câu hỏi</b>
+      <select id="m_qz">${(cachedQuizzes || []).map(q => `<option value="${esc(q.id)}" ${q.id === st.id ? 'selected' : ''}>${esc(q.title)}</option>`).join('')}</select>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">2. Cách chuyển câu &amp; xáo trộn</b>
+      <label class="ck"><input type="checkbox" id="m_au" ${st.auto ? 'checked' : ''}> Tự động qua câu khi hết thời gian chờ</label>
+      <label class="ck"><input type="checkbox" id="m_sq" ${st.shuffleQ ? 'checked' : ''}> Xáo trộn thứ tự câu hỏi</label>
+      <label class="ck"><input type="checkbox" id="m_sa" ${st.shuffleA !== false ? 'checked' : ''}> Xáo trộn vị trí đáp án</label>
+      <div class="two">
+        <div>Thời gian chờ (giây)<input id="m_wt" type="number" value="${st.wait ?? 10}" min="0" max="120"></div>
+        <div>Tối thiểu trước khi qua (giây)<input id="m_mn" type="number" value="${st.min ?? 5}" min="0" max="60"></div>
+      </div>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">3. Nhạc nền &amp; âm lượng</b>
+      <select id="m_mu">
+        ${renderMusicOptions(st.music || 'vui.wav')}
+      </select>
+      <div class="two">
+        <div>Âm lượng<input type="range" id="m_vol" min="0" max="100" value="${st.vol ?? 50}"></div>
+        <div><br><button type="button" class="sm" onclick="previewModalMusic()">▶ Nghe thử / dừng</button></div>
+      </div>
+
+      <b style="color:var(--p);display:block;margin:12px 0 4px">4. Banner sự kiện</b>
+      <input id="m_bt" placeholder="Tên chương trình / sự kiện" maxlength="80" value="${esc((st.brand && st.brand.title) || '')}">
+      <input id="m_bs" placeholder="Dòng chào" maxlength="120" value="${esc((st.brand && st.brand.sub) || '')}">
+      <div class="two">
+        <div>Màu nhấn<input type="color" id="m_bc" value="${(st.brand && st.brand.color) || '#ffd602'}" style="height:42px;padding:2px"></div>
+        <div>Hình nền<input type="file" accept="image/*" onchange="loadBg(this.files[0])"></div>
+      </div>
+      <button type="button" class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="openBrandEditor()">🎨 Xem / sửa giao diện (kéo thả tiêu đề, font, cỡ chữ, màu)</button>
+
+      <div id="m_err" class="er" style="margin-top:8px"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button onclick="saveRoomSettings()" style="flex:1">💾 Lưu cài đặt</button>
+        <button class="ghost" onclick="closeRoomSettings()" style="flex:1;color:#555;border-color:#aaa">Đóng</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(d);
+}
+function previewModalMusic() {
+  if (!bgm.paused) return stopMusic();
+  const v = $('m_mu').value;
+  const src = musicSrc(v);
+  if (src) startMusic(src, (Number($('m_vol').value) || 50) / 100);
+}
+function closeRoomSettings() {
+  if ($('smod')) $('smod').remove();
+}
+function onModalSelectProfile(profId) {
+  if (!profId) return;
+  const p = getProfiles().find(x => x.id === profId);
+  if (!p) return;
+  if ($('m_qz')) {
+    for (let opt of $('m_qz').options) {
+      if (opt.value === p.quizId) { $('m_qz').value = p.quizId; break; }
+    }
+  }
+  if ($('m_au')) $('m_au').checked = !!p.auto;
+  if ($('m_sq')) $('m_sq').checked = !!p.shuffleQ;
+  if ($('m_sa')) $('m_sa').checked = p.shuffleA !== false;
+  if ($('m_wt')) $('m_wt').value = p.wait ?? 10;
+  if ($('m_mn')) $('m_mn').value = p.min ?? 5;
+  if ($('m_mu')) $('m_mu').value = p.music || 'vui';
+  if ($('m_vol')) $('m_vol').value = p.vol ?? 50;
+  if ($('m_bt')) $('m_bt').value = (p.brand && p.brand.title) || '';
+  if ($('m_bs')) $('m_bs').value = (p.brand && p.brand.sub) || '';
+  if ($('m_bc')) $('m_bc').value = (p.brand && p.brand.color) || '#ffd602';
+  brandStyle = (p.brand && p.brand.style) || null;
+  if (p.bgData != null) bgData = p.bgData;
+  if (p.logoData != null) logoData = p.logoData;
+  showToast(`✔ Đã nạp Profile "${p.name}" vào bảng sửa! Bấm "Lưu cài đặt" để áp dụng cho phòng.`);
+}
+async function saveModalAsProfile() {
+  const currentTitle = (($('m_qz') && $('m_qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const defName = currentTitle + ' - ' + new Date().toLocaleDateString('vi-VN');
+  const name = await askInput('Đặt tên cho Profile mới:', defName);
+  if (!name) return;
+  const profs = getProfiles();
+  const newProfile = {
+    id: 'prof_' + Date.now(),
+    name,
+    createdAt: Date.now(),
+    quizId: $('m_qz') ? $('m_qz').value : '',
+    quizTitle: currentTitle,
+    auto: $('m_au') ? $('m_au').checked : true,
+    shuffleQ: $('m_sq') ? $('m_sq').checked : false,
+    shuffleA: $('m_sa') ? $('m_sa').checked : true,
+    wait: $('m_wt') ? Number($('m_wt').value) || 10 : 10,
+    min: $('m_mn') ? Number($('m_mn').value) || 5 : 5,
+    music: $('m_mu') ? $('m_mu').value : 'vui',
+    vol: $('m_vol') ? Number($('m_vol').value) : 50,
+    bgData: bgData || '',
+    brand: {
+      title: $('m_bt') ? $('m_bt').value.trim() : '',
+      sub: $('m_bs') ? $('m_bs').value.trim() : '',
+      color: $('m_bc') ? $('m_bc').value : '#ffd602',
+      style: brandStyle
+    },
+    logoData: logoData || ''
+  };
+  profs.unshift(newProfile);
+  putProfiles(profs);
+  if ($('m_prof')) $('m_prof').innerHTML = renderProfileOptions(newProfile.id);
+  showToast(`✔ Đã lưu Profile "${name}" thành công!`);
+}
+async function saveRoomSettings() {
+  const qzId = $('m_qz').value;
+  const auto = $('m_au').checked;
+  const shuffleQ = $('m_sq').checked;
+  const shuffleA = $('m_sa').checked;
+  const wait = Number($('m_wt').value);
+  const min = Number($('m_mn').value);
+  const music = $('m_mu').value;
+  const volVal = Number($('m_vol').value);
+  const brand = {
+    title: $('m_bt').value.trim(),
+    sub: $('m_bs').value.trim(),
+    color: $('m_bc').value,
+    logo: logoData,
+    style: brandStyle
+  };
+  const payload = { id: qzId, auto, shuffleQ, shuffleA, wait, min, brand, bg: bgData };
+  s.emit('host:update_settings', payload, r => {
+    if (r && r.err) {
+      if ($('m_err')) $('m_err').textContent = r.err;
+      return;
+    }
+    const qzTitle = (($('m_qz').selectedOptions[0]) || {}).text || curTitle;
+    curTitle = qzTitle;
+    curRoomSettings = { id: qzId, title: qzTitle, auto, shuffleQ, shuffleA, wait, min, music, vol: volVal, bg: bgData, brand };
+    try {
+      localStorage.qb_set = JSON.stringify({ music, vol: volVal });
+      localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color, style: brand.style });
+    } catch {}
+    setBrand(brand);
+    setBg(bgData);
+    stopMusic();
+    if (music !== 'none') {
+      const src = musicSrc(music);
+      if (src) startMusic(src, volVal / 100);
+    }
+    if ($('smod')) $('smod').remove();
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#26890c;color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;z-index:99;box-shadow:0 6px 16px #0004';
+    toast.textContent = '✔ Đã cập nhật cài đặt phòng!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  });
+}
+function playProfile() {
+  const id = $('selProfile') ? $('selProfile').value : '';
+  if (!id) return showToast('Hãy chọn một Profile trước', true);
+  const p = getProfiles().find(x => x.id === id);
+  if (!p) return showToast('Không tìm thấy Profile', true);
+  applyProfile(p); create();   // nạp toàn bộ cấu hình rồi tạo phòng luôn
+}
+function create() {
+  const music = $('mu').value, v = $('vol').value / 100, src = musicSrc(music);
+  try { localStorage.qb_set = JSON.stringify({ music, vol: $('vol').value }); } catch {}
+  curTitle = (($('qz').selectedOptions[0]) || {}).text || 'Quiz';
+  const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color, style: brand.style }); } catch {}
+  curRoomSettings = {
+    id: $('qz').value,
+    title: curTitle,
+    auto: $('au').checked,
+    shuffleQ: $('sq').checked,
+    shuffleA: $('sa').checked,
+    wait: Number($('wt').value),
+    min: Number($('mn').value),
+    music,
+    vol: $('vol').value,
+    bg: bgData,
+    brand
+  };
+  s.emit('host:create', { token: tok, id: $('qz').value, auto: $('au').checked, shuffleQ: $('sq').checked, shuffleA: $('sa').checked, wait: $('wt').value, min: $('mn').value, bg: bgData, brand }, r => {
+    if (r.err) { alert(r.err); if (/phiên/.test(r.err)) hostLogin(); return; }
+    role = 'host'; gameActive = true; muted = false; curPin = r.pin;
+    sessionStorage.qbh = JSON.stringify({ pin: r.pin, htoken: r.htoken, title: curTitle, bg: !!bgData });
+    setBg(bgData); setBrand(brand); stopMusic(); if (src) startMusic(src, v); soundBtn(); fullscreenBtn(); hostLobby(r.pin);
+  });
+}
+// ---- âm thanh / hình nền / hiệu ứng / hộp xác nhận / lưu kết quả ----
+const bgm = new Audio(); bgm.loop = true;
+let muted = false, vol = .5, customUrl = '', bgData = '', curTitle = '', gameActive = false;
+function startMusic(src, v) { vol = v; bgm.src = src; bgm.volume = v; bgm.muted = muted; bgm.play().catch(() => {}); }
+function stopMusic() { bgm.pause(); }
+function musicSrc(val) {
+  const v = val || ($('mu') ? $('mu').value : '') || ($('m_mu') ? $('m_mu').value : '');
+  if (!v || v === 'none') return '';
+  if (v === 'custom') return customUrl;
+  if (/\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(v)) {
+    return `/sounds/${encodeURIComponent(v)}`;
+  }
+  const found = (cachedSounds || []).find(s => s.name === v || s.filename.startsWith(v + '.'));
+  if (found) return found.url;
+  return `/sounds/${encodeURIComponent(v)}.wav`;
+}
+function previewMusic() { if (!bgm.paused) return stopMusic(); const src = musicSrc($('mu') ? $('mu').value : ''); if (src) startMusic(src, ($('vol') ? $('vol').value : 50) / 100); }
+function applause() { const a = new Audio('/sounds/applause.wav'); a.volume = muted ? 0 : Math.min(1, vol + .4); a.play().catch(() => {}); }
+function soundBtn() {
+  if ($('snd')) return; const b = document.createElement('button'); b.id = 'snd'; b.className = 'sm';
+  b.style.cssText = 'position:fixed;top:8px;right:8px;width:auto;z-index:8;padding:6px 10px'; b.textContent = '🔊';
+  b.onclick = () => { muted = !muted; bgm.muted = muted; b.textContent = muted ? '🔇' : '🔊'; }; document.body.appendChild(b);
+}
+function isFullScreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+function updateFullscreenUI() {
+  const isFs = isFullScreen();
+  const icon = $('btnFsIcon');
+  const txt = $('btnFsText');
+  if (icon && txt) {
+    icon.textContent = isFs ? '🗗' : '⛶';
+    txt.textContent = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  }
+  const topBtn = $('fsbtn');
+  if (topBtn) {
+    topBtn.textContent = isFs ? '🗗' : '⛶';
+    topBtn.title = isFs ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  }
+}
+function toggleFullScreen() {
+  try {
+    if (!isFullScreen()) {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) {
+        const p = req.call(el);
+        if (p && p.catch) p.catch(() => {});
+      }
+    } else {
+      const ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+      if (ex) {
+        const p = ex.call(document);
+        if (p && p.catch) p.catch(() => {});
+      }
+    }
+  } catch (e) {
+    console.warn('Fullscreen toggle failed:', e);
+  }
+}
+['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(ev => {
+  document.addEventListener(ev, updateFullscreenUI);
+});
+function fullscreenBtn() {
+  return;   // đã gom vào ☰ Menu
+  if ($('fsbtn')) return;
+  const b = document.createElement('button');
+  b.id = 'fsbtn';
+  b.className = 'sm';
+  b.style.cssText = 'position:fixed;top:8px;right:48px;width:auto;z-index:8;padding:6px 10px;font-size:0.95rem;background:#0008;border:1px solid #ffffff40;color:#fff;border-radius:8px;cursor:pointer;';
+  b.textContent = isFullScreen() ? '🗗' : '⛶';
+  b.title = isFullScreen() ? 'Thoát toàn màn hình' : 'Toàn màn hình trình chiếu';
+  b.onclick = toggleFullScreen;
+  document.body.appendChild(b);
+}
+function vibrateTap(ms = 45) {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(ms);
+    }
+  } catch (e) {}
+}
+const bgCss = u => u ? `linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url("${u}")` : '';
+function setBg(u) { const b = document.body.style; b.backgroundImage = bgCss(u); b.backgroundSize = 'cover'; b.backgroundPosition = 'center'; b.backgroundAttachment = 'fixed'; }
+// ---- banner sự kiện + xem thử ----
+let logoData = '';
+// ---- Kiểu banner: mọi vị trí/cỡ chữ tính theo % chiều rộng banner nên máy chiếu và điện thoại hiển thị cùng tỉ lệ ----
+const FONTS = [
+  ['baloo', 'Baloo 2 (mặc định)', '\'Baloo 2\',\'Nunito\',sans-serif'],
+  ['nunito', 'Nunito (tròn, dễ đọc)', '\'Nunito\',\'Segoe UI\',sans-serif'],
+  ['bevn', 'Be Vietnam Pro (hiện đại)', '\'Be Vietnam Pro\',\'Segoe UI\',sans-serif'],
+  ['mont', 'Montserrat (rộng, mạnh)', '\'Montserrat\',\'Segoe UI\',sans-serif'],
+  ['oswald', 'Oswald (chữ hẹp)', '\'Oswald\',\'Arial Narrow\',sans-serif'],
+  ['play', 'Playfair Display (sang trọng)', '\'Playfair Display\',Georgia,serif'],
+  ['paci', 'Pacifico (chữ viết tay)', '\'Pacifico\',cursive'],
+  ['lobster', 'Lobster (chữ viết đậm)', '\'Lobster\',cursive'],
+  ['dancing', 'Dancing Script (thư pháp)', '\'Dancing Script\',cursive'],
+  ['bangers', 'Bangers (truyện tranh)', '\'Bangers\',cursive']
+];
+const WEIGHTS = [[400, 'Thường'], [600, 'Vừa'], [700, 'Đậm'], [800, 'Rất đậm'], [900, 'Siêu đậm']];
+const DEF_STYLE = lg => ({ h: 14, bg: '#000000', ba: 40, bw: 4,
+  t: { x: lg ? 55 : 50, y: 36, s: 5, f: 'baloo', w: 800, c: '#ffffff', i: 0 },
+  s: { x: lg ? 55 : 50, y: 72, s: 3.2, f: 'nunito', w: 600, c: '#ffffff', i: 0 },
+  l: { x: 9, y: 50, s: 9 } });
+function mergeStyle(st, lg) {
+  const d = DEF_STYLE(lg); if (!st || typeof st !== 'object') return d;
+  for (const k of ['t', 's', 'l']) Object.assign(d[k], st[k] || {});
+  for (const k of ['h', 'bg', 'ba', 'bw']) if (st[k] != null) d[k] = st[k];
+  return d;
+}
+let brandStyle = null;
+const hexA = (h, a) => { const n = parseInt(String(h).slice(1), 16) || 0; return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a / 100})`; };
+function elStyle(k, e) {
+  const pos = `left:${e.x}%;top:${e.y}%;`;
+  if (k === 'l') return pos + `width:calc(var(--u,3px)*${e.s});`;
+  const f = FONTS.find(x => x[0] === e.f) || FONTS[0];
+  return pos + `font-size:calc(var(--u,3px)*${e.s});font-family:${f[2]};font-weight:${e.w};font-style:${e.i ? 'italic' : 'normal'};color:${/^#[0-9a-f]{6}$/i.test(e.c) ? e.c : '#fff'};`;
+}
+// ed = true: dùng trong trình chỉnh sửa (luôn hiện chỗ trống để kéo thả)
+const brandHtml = (b, ed) => {
+  if (!b || (!ed && !(b.title || b.sub || b.logo))) return '';
+  const lg = !!b.logo, st = mergeStyle(b.style, lg);
+  const col = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602';
+  const T = (k, txt, ph) => (txt || ed) ? `<div class="bel${txt ? '' : ' ph'}" data-k="${k}" data-s="${st[k].s}" style="${elStyle(k, st[k])}">${esc(txt || ph)}</div>` : '';
+  return `<div class="brand dz${ed ? ' ed' : ''}" style="aspect-ratio:100/${st.h};background:${hexA(st.bg, st.ba)};border-bottom:${st.bw}px solid ${col}">${lg ? `<img class="bel" data-k="l" src="${esc(b.logo)}" alt="" draggable="false" style="${elStyle('l', st.l)}">` : ''}${T('t', b.title, 'Tiêu đề chương trình')}${T('s', b.sub, 'Dòng phụ')}${ed ? '<i class="guide v"></i><i class="guide h"></i>' : ''}</div>`;
+};
+// Tính cỡ theo chiều rộng thực của banner; chữ quá dài thì tự co (rồi xuống dòng) cho vừa khung
+function fitBrand() {
+  document.querySelectorAll('.brand.dz').forEach(bn => {
+    const W = bn.clientWidth; if (!W) return;
+    const u = W / 100; bn.style.setProperty('--u', u + 'px');
+    bn.querySelectorAll('.bel[data-s]').forEach(el => {
+      const base = parseFloat(el.dataset.s) * u, x = parseFloat(el.style.left); const xx = isNaN(x) ? 50 : x;
+      const avail = Math.max(u * 10, 2 * Math.min(xx, 100 - xx) / 100 * W - 2 * u);
+      el.style.whiteSpace = 'nowrap'; el.style.width = ''; el.style.fontSize = base + 'px';
+      const sw = el.scrollWidth;
+      if (sw > avail) { el.style.fontSize = Math.max(base * .6, base * avail / sw) + 'px'; if (el.scrollWidth > avail + 1) { el.style.whiteSpace = 'normal'; el.style.width = avail + 'px'; } }
+    });
+  });
+}
+const setBrand = b => { const e = $('brand'); if (e) { e.innerHTML = brandHtml(b); fitBrand(); } };
+addEventListener('resize', () => fitBrand());
+new MutationObserver(() => { if (!fitBrand.busy) { fitBrand.busy = 1; requestAnimationFrame(() => { fitBrand(); fitBrand.busy = 0; }); } }).observe(document.body, { childList: true, subtree: true });
+const readBrand = () => ({ title: $('bt').value.trim(), sub: $('bs').value.trim(), color: $('bc').value, logo: logoData, style: brandStyle });
+s.on('brand', b => setBrand(b));
+s.on('host:settings', d => { if (d) { curRoomSettings = { ...(curRoomSettings || {}), ...d }; if (d.title) curTitle = d.title; } });
+function refreshLogo() { if (!$('bls')) return; $('bls').innerHTML = logoData ? '✔ Đã chọn logo · <a href="#" style="color:#1368ce" onclick="clearLogo();return false">xoá</a>' : 'Chưa chọn'; }
+function clearLogo() { logoData = ''; localStorage.removeItem('qb_logo'); refreshLogo(); }
+async function loadLogo(f) {
+  if (!f) return;
+  try {
+    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+    let k = Math.min(1, 256 / Math.max(img.width, img.height)), u;
+    do {
+      const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); u = cv.toDataURL('image/png'); k *= .75;
+    } while (u.length > 190000 && k > .05);
+    logoData = u; try { localStorage.qb_logo = u; } catch {} refreshLogo();
+  } catch { if ($('bls')) $('bls').textContent = 'Không đọc được ảnh'; }
+}
+function previewUI() { openBrandEditor(); }
+async function logoToData() {
+  if (logoData) return logoData;
+  const im = document.querySelector('#brand img.bel'); if (!im) return '';
+  try { const bl = await (await fetch(im.src)).blob(); return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch { return ''; }
+}
+const DZ_SW = ['#ffffff', '#ffd602', '#000000', '#ff4d8d', '#26d0ce', '#7CFC9A'];
+async function openBrandEditor() {
+  if ($('dzov')) return;
+  const inRoom = !!$('m_bt'), px = inRoom ? 'm_' : '';
+  const gv = id => $(id) ? $(id).value : '';
+  const logo0 = await logoToData();
+  const D = { title: gv(px + 'bt').trim(), sub: gv(px + 'bs').trim(), color: gv(px + 'bc') || '#ffd602', logo: logo0, style: mergeStyle(brandStyle, !!logo0) };
+  const orig = JSON.stringify(D);
+  let sel = 't', view = 'host';
+  const musicVal = gv('mu') || gv('m_mu') || 'none', volVal = (Number(gv('vol') || gv('m_vol')) || 50) / 100, msrc = musicSrc(musicVal);
+  const prevPlaying = !bgm.paused;
+  if ($('smod')) $('smod').style.display = 'none';
+
+  const d = document.createElement('div'); d.id = 'dzov'; d.className = 'dzov';
+  d.style.backgroundImage = bgData ? bgCss(bgData) : '';
+  d.innerHTML = `<div class="dz-top">
+      <div class="dz-seg"><button type="button" data-v="host" class="on">🖥 Màn chiếu</button><button type="button" data-v="phone">📱 Điện thoại</button></div>
+      <span class="dz-hint">Kéo thả để di chuyển · bấm đúp để sửa chữ · phím mũi tên để nhích</span>
+      <div class="dz-act">${msrc && musicVal !== 'none' ? '<button type="button" id="dzSnd">🔊 Nhạc</button>' : ''}<button type="button" id="dzReset">↺ Mặc định</button><button type="button" id="dzCancel">Hủy</button><button type="button" id="dzSave">💾 Lưu</button></div>
+    </div>
+    <div class="dz-stage" id="dzStage"></div>
+    <div class="dz-panel" id="dzPanel"></div>`;
+  document.body.appendChild(d);
+  const bnEl = () => d.querySelector('#dzBanner .brand');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  const hostSample = `<div class="meta"><span class="pill">Câu 2/5</span><span class="pill t">⏱ <b>11</b>s</span></div><div class="tbar"><i style="width:62%"></i></div>
+    <div class="qcard">Câu 2. Khi một đồng nghiệp hỗ trợ bạn xử lý công việc gấp, bạn nên làm gì?</div>
+    <div class="grid">${['Xem đó là việc đương nhiên và không cần phản hồi.', 'Chỉ cảm ơn nếu đồng nghiệp là quản lý.', 'Cảm ơn và ghi nhận sự hỗ trợ của đồng nghiệp.', 'Chờ đến cuối năm mới cần nhắc lại.'].map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${o}</div>`).join('')}</div><div class="big">0 đã trả lời</div>`;
+  const phoneSample = `<div class="pscreen"><div class="meta pmeta"><span class="pill">Câu 2/5</span><span class="pill t">⏱&nbsp;<b>11</b>s</span></div><div class="tbar ptbar"><i style="width:62%"></i></div>
+    <div class="qcard pq">Câu 2. Khi một đồng nghiệp hỗ trợ bạn xử lý công việc gấp, bạn nên làm gì?</div>
+    <div class="grid pgrid">${['Xem đó là việc đương nhiên', 'Chỉ cảm ơn nếu là quản lý', 'Cảm ơn và ghi nhận sự hỗ trợ', 'Chờ cuối năm mới nhắc lại'].map((o, i) => `<button class="ans-btn" style="background:${COL[i]};--fs:1.4rem"><span class="sy">${SYM[i]}</span><span class="tx">${o}</span></button>`).join('')}</div></div>`;
+  const phoneDoc = () => `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fonts/fonts.css"><style>${[...document.querySelectorAll('style')].map(x => x.textContent).join('\n')}
+html,body{background:transparent!important;min-height:0}body::before,body::after{display:none}main.fillp{min-height:520px}</style></head><body class="pplay"><div id="wrap"><main id="app" class="fillp">${phoneSample}</main></div></body></html>`;
+
+  function renderBanner() {
+    d.querySelector('#dzBanner').innerHTML = brandHtml(D, true);
+    fitBrand(); markSel();
+  }
+  function markSel() { const b = bnEl(); if (b) b.querySelectorAll('.bel').forEach(e => e.classList.toggle('sel', e.dataset.k === sel)); }
+  function renderStage() {
+    const bgcss = bgData ? bgCss(bgData) + ',linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45)' : 'linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45)';
+    $('dzStage').innerHTML = view === 'host'
+      ? `<div class="dz-frame host"><div id="dzBanner"></div><main>${hostSample}</main></div>`
+      : `<div class="dz-frame phone" style="background:${bgcss};background-size:cover;background-position:center"><div id="dzBanner"></div><iframe id="dzIf" class="dz-if" title="Màn hình điện thoại"></iframe></div>`;
+    renderBanner();
+    if (view === 'phone') $('dzIf').srcdoc = phoneDoc();
+    d.querySelectorAll('.dz-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  }
+  const cur = () => D.style[sel];
+  function refreshEl(k) {
+    const el = d.querySelector(`#dzBanner [data-k="${k}"]`); if (!el) return renderBanner();
+    if (k !== 'l') { const txt = k === 't' ? D.title : D.sub; el.textContent = txt || (k === 't' ? 'Tiêu đề chương trình' : 'Dòng phụ'); el.classList.toggle('ph', !txt); el.dataset.s = D.style[k].s; }
+    el.setAttribute('style', elStyle(k, D.style[k])); fitBrand();
+  }
+  function applyBar() {
+    const b = bnEl(); if (!b) return; const st = D.style;
+    b.style.aspectRatio = `100/${st.h}`; b.style.background = hexA(st.bg, st.ba); b.style.borderBottom = `${st.bw}px solid ${D.color}`; fitBrand();
+  }
+  const rng = (id, lab, min, max, step, val, unit = '') => `<label>${lab} <b id="${id}v">${val}${unit}</b><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></label>`;
+  function renderPanel() {
+    const tabs = [['t', 'Tiêu đề'], ['s', 'Dòng phụ'], ['l', 'Logo'], ['b', 'Khung & màu']];
+    let h = `<div class="dz-tabs">${tabs.map(([k, n]) => `<button type="button" data-tab="${k}" class="${sel === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="dz-ctl">`;
+    if (sel === 't' || sel === 's') {
+      const e = D.style[sel];
+      h += `<label class="w2">Nội dung<input id="dzTxt" maxlength="${sel === 't' ? 80 : 120}" value="${esc(sel === 't' ? D.title : D.sub)}" placeholder="${sel === 't' ? 'Tên chương trình / sự kiện' : 'Dòng chào'}"></label>
+        <label>Cỡ chữ <b id="dzSzv">${Number(e.s).toFixed(1)}</b><span class="rw"><button type="button" data-act="dec">A−</button><input type="range" id="dzSz" min="1.5" max="12" step="0.1" value="${e.s}"><button type="button" data-act="inc">A+</button></span></label>
+        <label>Font chữ<select id="dzFont">${FONTS.map(f => `<option value="${f[0]}" ${f[0] === e.f ? 'selected' : ''}>${f[1]}</option>`).join('')}</select></label>
+        <label>Độ đậm<select id="dzW">${WEIGHTS.map(w => `<option value="${w[0]}" ${Number(e.w) === w[0] ? 'selected' : ''}>${w[1]}</option>`).join('')}</select></label>
+        <label>Màu chữ<span class="rw"><input type="color" id="dzCol" value="${e.c}">${DZ_SW.map(c => `<i class="sw" data-c="${c}" style="background:${c}"></i>`).join('')}</span></label>
+        <label class="w2">Kiểu &amp; căn<span class="rw"><button type="button" id="dzIt" class="${e.i ? 'on' : ''}"><i>I</i></button><button type="button" data-act="cx">⇔ Giữa ngang</button><button type="button" data-act="cy">⇕ Giữa dọc</button></span></label>`;
+    } else if (sel === 'l') {
+      h += D.logo ? rng('dzLs', 'Cỡ logo', 2, 30, 0.5, D.style.l.s) + `<label>Căn<span class="rw"><button type="button" data-act="cx">⇔ Giữa ngang</button><button type="button" data-act="cy">⇕ Giữa dọc</button></span></label>
+        <label>Logo<span class="rw"><input type="file" id="dzLf" accept="image/*"><button type="button" data-act="rmlogo">Xoá logo</button></span></label>`
+        : `<label class="w2">Chưa có logo<span class="rw"><input type="file" id="dzLf" accept="image/*"></span></label>`;
+    } else {
+      h += rng('dzH', 'Chiều cao banner', 6, 30, 0.5, D.style.h, '%') + `<label>Màu nền khung<span class="rw"><input type="color" id="dzBg" value="${D.style.bg}"></span></label>` +
+        rng('dzBa', 'Độ đậm nền', 0, 100, 1, D.style.ba, '%') + `<label>Màu viền dưới<span class="rw"><input type="color" id="dzAc" value="${D.color}"></span></label>` + rng('dzBw', 'Độ dày viền', 0, 12, 1, D.style.bw, 'px');
+    }
+    $('dzPanel').innerHTML = h + '</div>';
+  }
+  function select(k) { if (sel === k) return markSel(); sel = k; markSel(); renderPanel(); }
+
+  // --- kéo thả / sửa chữ trực tiếp trên banner ---
+  const stage = d.querySelector('#dzStage');
+  stage.addEventListener('pointerdown', ev => {
+    const bn = ev.target.closest('.brand.dz'); if (!bn) return;
+    const el = ev.target.closest('.bel'); if (!el) return select('b');
+    if (el.isContentEditable) return;
+    ev.preventDefault();
+    const k = el.dataset.k; select(k);
+    const r = bn.getBoundingClientRect(), o = D.style[k], sx = ev.clientX, sy = ev.clientY, ox = o.x, oy = o.y;
+    const gv_ = bn.querySelector('.guide.v'), gh = bn.querySelector('.guide.h');
+    el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing';
+    const mv = e => {
+      let nx = clamp(ox + (e.clientX - sx) / r.width * 100, 0, 100), ny = clamp(oy + (e.clientY - sy) / r.height * 100, 0, 100);
+      const snx = Math.abs(nx - 50) < 1.5, sny = Math.abs(ny - 50) < 3;
+      if (snx) nx = 50; if (sny) ny = 50;
+      o.x = Math.round(nx * 10) / 10; o.y = Math.round(ny * 10) / 10;
+      el.style.left = o.x + '%'; el.style.top = o.y + '%';
+      gv_.style.opacity = snx ? 1 : .35; gh.style.opacity = sny ? 1 : .35;
+      fitBrand();
+    };
+    const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.style.cursor = ''; gv_.style.opacity = 0; gh.style.opacity = 0; };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+  stage.addEventListener('dblclick', ev => {
+    const el = ev.target.closest('.bel'); if (!el || el.dataset.k === 'l') return;
+    const k = el.dataset.k, key = k === 't' ? 'title' : 'sub';
+    el.classList.remove('ph'); el.textContent = D[key]; el.style.whiteSpace = 'nowrap'; el.style.width = '';
+    el.contentEditable = 'true'; el.focus(); getSelection().selectAllChildren(el);
+    const done = () => { el.contentEditable = 'false'; D[key] = el.textContent.replace(/\s+/g, ' ').trim().slice(0, k === 't' ? 80 : 120); refreshEl(k); renderPanel(); };
+    el.addEventListener('blur', done, { once: true });
+    el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); el.blur(); } });
+  });
+
+  // --- bảng điều khiển ---
+  const P = d.querySelector('#dzPanel');
+  P.addEventListener('input', ev => {
+    const t = ev.target, e = (sel === 't' || sel === 's') ? D.style[sel] : null;
+    if (t.id === 'dzTxt') { D[sel === 't' ? 'title' : 'sub'] = t.value; refreshEl(sel); }
+    else if (t.id === 'dzSz') { e.s = +t.value; $('dzSzv').textContent = e.s.toFixed(1); refreshEl(sel); }
+    else if (t.id === 'dzCol') { e.c = t.value; refreshEl(sel); }
+    else if (t.id === 'dzLs') { D.style.l.s = +t.value; $('dzLsv').textContent = t.value; refreshEl('l'); }
+    else if (t.id === 'dzH') { D.style.h = +t.value; $('dzHv').textContent = t.value + '%'; applyBar(); }
+    else if (t.id === 'dzBg') { D.style.bg = t.value; applyBar(); }
+    else if (t.id === 'dzBa') { D.style.ba = +t.value; $('dzBav').textContent = t.value + '%'; applyBar(); }
+    else if (t.id === 'dzAc') { D.color = t.value; applyBar(); }
+    else if (t.id === 'dzBw') { D.style.bw = +t.value; $('dzBwv').textContent = t.value + 'px'; applyBar(); }
+  });
+  P.addEventListener('change', async ev => {
+    const t = ev.target, e = (sel === 't' || sel === 's') ? D.style[sel] : null;
+    if (t.id === 'dzFont') { e.f = t.value; refreshEl(sel); }
+    else if (t.id === 'dzW') { e.w = +t.value; refreshEl(sel); }
+    else if (t.id === 'dzLf' && t.files[0]) { await loadLogo(t.files[0]); D.logo = logoData; renderBanner(); renderPanel(); }
+  });
+  P.addEventListener('click', ev => {
+    const tb = ev.target.closest('[data-tab]'); if (tb) { sel = tb.dataset.tab; markSel(); return renderPanel(); }
+    const sw = ev.target.closest('.sw'); if (sw && (sel === 't' || sel === 's')) { cur().c = sw.dataset.c; refreshEl(sel); return renderPanel(); }
+    if (ev.target.closest('#dzIt')) { cur().i = cur().i ? 0 : 1; refreshEl(sel); return renderPanel(); }
+    const ac = ev.target.closest('[data-act]'); if (!ac) return;
+    const a = ac.dataset.act;
+    if (a === 'inc' || a === 'dec') { const e = cur(); e.s = clamp(Math.round((e.s + (a === 'inc' ? .3 : -.3)) * 10) / 10, 1.5, 12); refreshEl(sel); renderPanel(); }
+    else if (a === 'cx') { cur().x = 50; refreshEl(sel); }
+    else if (a === 'cy') { cur().y = 50; refreshEl(sel); }
+    else if (a === 'rmlogo') { D.logo = ''; clearLogo(); sel = 'l'; renderBanner(); renderPanel(); }
+  });
+  d.querySelector('.dz-seg').addEventListener('click', ev => { const b = ev.target.closest('[data-v]'); if (b && b.dataset.v !== view) { view = b.dataset.v; renderStage(); } });
+
+  // --- phím mũi tên nhích 0.5% (Shift: 2%) ---
+  const onKey = ev => {
+    if (!$('dzov')) return;
+    if (ev.key === 'Escape') { if (!ev.defaultPrevented) cancel(); return; }
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key)) return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test((ev.target.tagName || '')) && ev.target.type !== 'range' || ev.target.isContentEditable) return;
+    if (sel === 'b') return;
+    ev.preventDefault(); const e = cur(), st = ev.shiftKey ? 2 : .5;
+    if (ev.key === 'ArrowLeft') e.x = clamp(e.x - st, 0, 100); if (ev.key === 'ArrowRight') e.x = clamp(e.x + st, 0, 100);
+    if (ev.key === 'ArrowUp') e.y = clamp(e.y - st, 0, 100); if (ev.key === 'ArrowDown') e.y = clamp(e.y + st, 0, 100);
+    e.x = Math.round(e.x * 10) / 10; e.y = Math.round(e.y * 10) / 10; refreshEl(sel);
+  };
+  document.addEventListener('keydown', onKey);
+
+  // --- nhạc, mặc định, huỷ, lưu ---
+  const closeEd = () => {
+    document.removeEventListener('keydown', onKey); d.remove();
+    if (!prevPlaying && !bgm.paused && d._musicStarted) stopMusic();
+    if ($('smod')) $('smod').style.display = '';
+  };
+  async function cancel() {
+    if (JSON.stringify(D) !== orig && !await ask('Thoát mà không lưu các thay đổi giao diện?', 'Thoát, bỏ thay đổi', 'Tiếp tục sửa')) return;
+    closeEd();
+  }
+  const snd = d.querySelector('#dzSnd');
+  if (snd) snd.onclick = () => { if (bgm.paused) { startMusic(msrc, volVal); d._musicStarted = true; snd.textContent = '🔊 Nhạc'; } else { stopMusic(); snd.textContent = '🔇 Nhạc'; } };
+  d.querySelector('#dzReset').onclick = async () => { if (await ask('Đặt lại vị trí, font, cỡ chữ và màu về mặc định?', 'Đặt lại', 'Giữ nguyên')) { D.style = DEF_STYLE(!!D.logo); renderBanner(); renderPanel(); } };
+  d.querySelector('#dzCancel').onclick = cancel;
+  d.querySelector('#dzSave').onclick = () => {
+    const set = (id, v) => { if ($(id)) $(id).value = v; };
+    set(px + 'bt', D.title); set(px + 'bs', D.sub); set(px + 'bc', D.color);
+    logoData = D.logo; try { if (logoData) localStorage.qb_logo = logoData; else localStorage.removeItem('qb_logo'); } catch {}
+    refreshLogo(); brandStyle = D.style;
+    try { localStorage.qb_brand = JSON.stringify({ ...JSON.parse(localStorage.qb_brand || '{}'), title: D.title, sub: D.sub, color: D.color, style: D.style }); } catch {}
+    closeEd();
+    if (inRoom) { saveRoomSettings(); if ($('smod')) $('smod').style.display = ''; }
+    else showToast(activeProfileId ? '✔ Đã lưu giao diện. Bấm "Cập nhật Profile" nếu muốn ghi vào profile đang dùng.' : '✔ Đã lưu giao diện — khi chơi thật sẽ hiện y như bản này.');
+  };
+  renderStage(); renderPanel();
+}
+function refreshBg() { $('bgs').innerHTML = bgData ? '✔ Đã chọn hình nền · <a href="#" style="color:#1368ce" onclick="clearBg();return false">xoá</a>' : 'Chưa chọn'; }
+function clearBg() { bgData = ''; localStorage.removeItem('qb_bg'); refreshBg(); }
+async function loadBg(f) {
+  if (!f) return;
+  try {
+    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+    const k = Math.min(1, 1024 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+    cv.width = img.width * k; cv.height = img.height * k; cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    let q = .75, u = cv.toDataURL('image/jpeg', q); while (u.length > 260000 && q > .3) { q -= .1; u = cv.toDataURL('image/jpeg', q); }
+    bgData = u; try { localStorage.qb_bg = u; } catch {} refreshBg();
+  } catch { $('bgs').textContent = 'Không đọc được ảnh'; }
+}
+s.on('bg', u => setBg(u));
+let activeFireworksCleanup = null;
+function fireworks(ms = 8000, isGrand = true) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (activeFireworksCleanup) { activeFireworksCleanup(); }
+
+  const cv = document.createElement('canvas');
+  cv.id = 'fw-canvas';
+  cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99;width:100vw;height:100vh';
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  
+  let w = cv.width = window.innerWidth;
+  let h = cv.height = window.innerHeight;
+  const onResize = () => {
+    if (!cv.parentNode) return;
+    w = cv.width = window.innerWidth;
+    h = cv.height = window.innerHeight;
+  };
+  window.addEventListener('resize', onResize);
+
+  const colors = [
+    { r: 255, g: 214, b: 2 },   // gold
+    { r: 255, g: 77,  b: 141 }, // vibrant pink
+    { r: 38,  g: 208, b: 206 }, // cyan / neon teal
+    { r: 140, g: 60,  b: 255 }, // royal purple
+    { r: 47,  g: 220, b: 90 },  // emerald / lime
+    { r: 255, g: 80,  b: 80 },  // radiant red
+    { r: 255, g: 175, b: 30 }   // bright orange
+  ];
+
+  let rockets = [];
+  let sparks = [];
+  let confetti = [];
+  let flash = 0;
+  const endTime = Date.now() + ms;
+  let animId = null;
+  let lastLaunch = 0;
+
+  function createRocket() {
+    const startX = Math.random() * (w * 0.8) + (w * 0.1);
+    const targetX = startX + (Math.random() - 0.5) * (w * 0.35);
+    const targetY = Math.random() * (h * 0.45) + (h * 0.08);
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    const speed = Math.sqrt((h - targetY) * 0.09) + Math.random() * 2 + 10;
+    const angle = Math.atan2(targetY - h, targetX - startX);
+    rockets.push({
+      x: startX,
+      y: h,
+      prevX: startX,
+      prevY: h,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      targetY: targetY,
+      color: col
+    });
+  }
+
+  function explode(x, y, baseColor) {
+    flash = Math.min(flash + 0.22, 0.4);
+    const count = (navigator.hardwareConcurrency <= 4 ? 45 : 85);
+    const type = Math.random();
+    const col2 = colors[Math.floor(Math.random() * colors.length)];
+    
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.35;
+      const speed = Math.random() * 6.8 + (type > 0.4 ? 2.5 : 1.5);
+      const isGold = type > 0.7 && Math.random() > 0.35;
+      const chosenCol = isGold ? { r: 255, g: 225, b: 90 } : (Math.random() > 0.5 ? baseColor : col2);
+      sparks.push({
+        x: x,
+        y: y,
+        prevX: x,
+        prevY: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        decay: Math.random() * 0.016 + 0.01,
+        color: chosenCol,
+        flicker: Math.random() * 10,
+        gravity: isGold ? 0.05 : 0.08,
+        friction: 0.965,
+        size: isGold ? (Math.random() * 2.8 + 1.6) : (Math.random() * 2.2 + 1.2)
+      });
+    }
+
+    if (isGrand) {
+      for (let k = 0; k < 12; k++) {
+        const cAngle = Math.random() * Math.PI * 2;
+        const cSpeed = Math.random() * 4.5 + 1.5;
+        const cCol = colors[Math.floor(Math.random() * colors.length)];
+        confetti.push({
+          x: x,
+          y: y,
+          vx: Math.cos(cAngle) * cSpeed,
+          vy: Math.sin(cAngle) * cSpeed - 2,
+          w: Math.random() * 7 + 5,
+          h: Math.random() * 4 + 3,
+          rot: Math.random() * 360,
+          vrot: (Math.random() - 0.5) * 12,
+          color: cCol,
+          alpha: 1,
+          decay: Math.random() * 0.007 + 0.005,
+          sway: Math.random() * 10
+        });
+      }
+    }
+  }
+
+  createRocket();
+  setTimeout(() => { if (cv.parentNode) createRocket(); }, 120);
+  setTimeout(() => { if (cv.parentNode) createRocket(); }, 300);
+
+  function loop(now) {
+    if (!cv.parentNode) return;
+    
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+
+    if (flash > 0.01) {
+      ctx.fillStyle = `rgba(255, 235, 190, ${flash * 0.35})`;
+      ctx.fillRect(0, 0, w, h);
+      flash *= 0.88;
+    }
+
+    if (Date.now() < endTime) {
+      const interval = isGrand ? 300 : 450;
+      if (now - lastLaunch > interval) {
+        createRocket();
+        if (isGrand && Math.random() > 0.4) {
+          setTimeout(() => { if (cv.parentNode) createRocket(); }, 100);
+        }
+        lastLaunch = now;
+      }
+    }
+
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.prevX = r.x;
+      r.prevY = r.y;
+      r.x += r.vx;
+      r.y += r.vy;
+      r.vy += 0.08;
+
+      ctx.strokeStyle = `rgba(${r.color.r}, ${r.color.g}, ${r.color.b}, 0.9)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(r.prevX, r.prevY);
+      ctx.lineTo(r.x, r.y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (r.vy >= -1 || r.y <= r.targetY) {
+        explode(r.x, r.y, r.color);
+        rockets.splice(i, 1);
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.prevX = s.x;
+      s.prevY = s.y;
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vx *= s.friction;
+      s.vy = s.vy * s.friction + s.gravity;
+      s.alpha -= s.decay;
+      s.flicker += 0.3;
+
+      if (s.alpha <= 0) {
+        sparks.splice(i, 1);
+        continue;
+      }
+
+      const flickAlpha = Math.max(0, Math.min(1, s.alpha * (0.75 + 0.25 * Math.sin(s.flicker))));
+      ctx.strokeStyle = `rgba(${s.color.r}, ${s.color.g}, ${s.color.b}, ${flickAlpha})`;
+      ctx.lineWidth = s.size;
+      ctx.beginPath();
+      ctx.moveTo(s.prevX, s.prevY);
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+    for (let i = confetti.length - 1; i >= 0; i--) {
+      const c = confetti[i];
+      c.x += c.vx + Math.sin(c.sway += 0.05) * 0.8;
+      c.y += c.vy;
+      c.vy = Math.min(c.vy + 0.06, 3);
+      c.rot += c.vrot;
+      c.alpha -= c.decay;
+
+      if (c.alpha <= 0 || c.y > h + 20) {
+        confetti.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate((c.rot * Math.PI) / 180);
+      ctx.fillStyle = `rgba(${c.color.r}, ${c.color.g}, ${c.color.b}, ${c.alpha})`;
+      ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+      ctx.restore();
+    }
+
+    if (rockets.length || sparks.length || confetti.length || Date.now() < endTime) {
+      animId = requestAnimationFrame(loop);
+    } else {
+      cleanup();
+    }
+  }
+
+  function cleanup() {
+    if (animId) cancelAnimationFrame(animId);
+    window.removeEventListener('resize', onResize);
+    if (cv.parentNode) cv.remove();
+    if (activeFireworksCleanup === cleanup) activeFireworksCleanup = null;
+  }
+
+  activeFireworksCleanup = cleanup;
+  animId = requestAnimationFrame(loop);
+}
+function ask(msg, yes = 'Có', no = 'Không') {
+  return new Promise(r => {
+    const d = document.createElement('div'); d.className = 'mod';
+    d.innerHTML = `<div class="box"><p>${msg}</p><button id="y">${yes}</button><button id="n" class="ghost">${no}</button></div>`;
+    document.body.appendChild(d); d.querySelector('#y').onclick = () => { d.remove(); r(true); }; d.querySelector('#n').onclick = () => { d.remove(); r(false); };
+  });
+}
+const RK = 'qb_results';
+const getRes = () => { try { return JSON.parse(localStorage[RK] || '[]'); } catch { return []; } };
+const putRes = a => { try { localStorage[RK] = JSON.stringify(a); return true; } catch { return false; } };
+function saveRes(d) { if (getRes().some(x => x.rid === d.rid)) return true; return putRes([{ id: Date.now(), rid: d.rid, title: curTitle, date: new Date().toLocaleString('vi-VN'), top: d.top, full: d.full, qs: d.qs }, ...getRes()].slice(0, 15)); }
+async function viewRes(id, srv) {
+  let r;
+  if (srv) { const x = await fetch('/api/results/' + id, { headers: { 'x-token': tok } }); if (!x.ok) return alert('Không tải được kết quả'); r = await x.json(); r.date = new Date(r.created_at).toLocaleString('vi-VN'); }
+  else r = getRes().find(x => x.id === id);
+  if (r) { lastEnd = r; showEnd(r, true, r); }
+}
+async function delRes(id, srv) {
+  if (!await ask('Xoá kết quả này? Không thể khôi phục.', 'Xoá', 'Giữ lại')) return;
+  if (srv) await fetch('/api/results/' + id, { method: 'DELETE', headers: { 'x-token': tok } }); else putRes(getRes().filter(x => x.id !== id));
+  hostMenu();
+}
+window.addEventListener('beforeunload', e => { if (role === 'host' && gameActive) { e.preventDefault(); e.returnValue = ''; } });
+let lobbyList = [];
+s.on('lobby', n => {
+  lobbyList = n; if (!$('pl')) return;
+  $('pl').innerHTML = n.length ? `<div>${n.length} người chơi</div>` + n.map((x, i) => `<span class="chip ${x.online ? '' : 'dim'}">${esc(x.name)} <a href="#" style="color:#fff" onclick="kick(${i});return false">✕</a></span>`).join('') : 'Chưa có ai';
+});
+async function kick(i) { if (lobbyList[i] && await ask('Đuổi ' + esc(lobbyList[i].name) + ' khỏi phòng?')) s.emit('host:kick', lobbyList[i].key); }
+s.on('kicked', () => { localStorage.removeItem('qb'); role = ''; alert('Bạn đã bị host mời ra khỏi phòng'); home(); });
+s.on('sent', showSent);
+s.on('connect', () => {
+  $('net').style.display = 'none'; $('net').textContent = 'Mất kết nối, đang kết nối lại…';
+  const v = JSON.parse(localStorage.qb || 'null'), hv = JSON.parse(sessionStorage.qbh || 'null');
+  if (role === 'player' && v) doJoin(v.pin, v.name, v.token, true);
+  else if (role === 'host' && hv) hostRejoin(hv, true);
+});
+s.on('hostoff', () => { if (role === 'player') { $('net').textContent = 'Host đang mất kết nối, vui lòng chờ…'; $('net').style.display = 'block'; } });
+s.on('hoston', () => { if (role === 'player') $('net').style.display = 'none'; });
+s.on('disconnect', () => { if (role) $('net').style.display = 'block'; });
+let qEnd = 0;
+function drawQ(note) {
+  clearInterval(timer); const q = cur;
+  const head = `<div class="meta"><span class="pill">Câu ${q.i}/${q.total}</span><span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span></div><div class="tbar"><i id="tb" style="width:100%"></i></div><div class="qcard">${esc(q.q)}</div>`;
+  if (role === 'host') h(head + `<div class="grid">${q.options.map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${otx(o)}</div>`).join('')}</div><div id="an" class="big">0 đã trả lời</div>`);
+  else if (role === 'player') {
+    const fz = o => { const n = String(o).length; return n <= 28 ? '1.75rem' : n <= 55 ? '1.5rem' : n <= 90 ? '1.28rem' : '1.1rem'; };
+    h(`<div class="pscreen"><div class="meta pmeta"><span class="pill">Câu ${q.i}/${q.total}</span><span class="pill t" id="tmw">⏱&nbsp;<b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span></div><div class="tbar ptbar"><i id="tb" style="width:100%"></i></div><div class="qcard pq ${String(q.q).length > 110 ? 'long' : ''}">${esc(q.q)}</div>` + (note ? `<div class="er" style="color:#ffd602;font-size:1.15rem;margin:0 0 8px">${esc(note)}</div>` : '') + `<div class="grid pgrid">${q.options.map((o, i) => `<button class="ans-btn" style="background:${COL[i]};--fs:${fz(o)}" onpointerdown="vibrateTap(40)" onclick="ans(${i})"><span class="sy">${SYM[i]}</span><span class="tx">${otx(o)}</span></button>`).join('')}</div></div>`);
+    app.classList.add('fillp'); document.body.classList.add('pplay');
+  }
+  timer = setInterval(() => { const t = Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0); if ($('tm')) $('tm').textContent = t; if ($('tmw')) $('tmw').classList.toggle('low', t <= 5 && t > 0); if ($('tb')) $('tb').style.width = Math.max(0, (qEnd - Date.now()) / (q.time * 1000) * 100) + '%'; if (t <= 0) clearInterval(timer); }, 500);
+}
+s.on('question', q => { cur = q; qEnd = Date.now() + q.time * 1000; drawQ(); });
+function showSent() {
+  const pk = lastPick && cur && lastPick.q === cur.i ? lastPick.i : null;
+  h(`<div class="psent">${pk != null ? `<div class="pick" style="background-color:${COL[pk]}"><span class="sy">${SYM[pk]}</span><div><small>Bạn đã chọn</small>${otx(cur.options[pk])}</div></div>` : '<div class="emoji" style="margin:0">✅</div>'}<h1>Đã gửi! ✅</h1><div class="big pulse">Chờ mọi người…</div></div>`);
+  app.classList.add('fillp');
+}
+let lastPick = null;
+function ans(i) {
+  vibrateTap(45); lastPick = { q: cur && cur.i, i };
+  document.querySelectorAll('.grid button').forEach(b => b.disabled = true);
+  let done = false;
+  const to = setTimeout(() => { if (!done) { done = true; drawQ('Chưa gửi được, hãy chọn lại'); } }, 5000);
+  s.emit('player:answer', i, r => { if (done) return; done = true; clearTimeout(to); if (r && r.ok) showSent(); else drawQ((r && r.err) || 'Chưa gửi được, hãy chọn lại'); });
+}
+s.on('answered', d => { if ($('an')) $('an').textContent = `${d.done}/${d.total} đã trả lời`; });
+const board = (t, me) => {
+  const medal = ['🥇', '🥈', '🥉'], cls = ['p1', 'p2', 'p3'], top3 = t.slice(0, 3);
+  const slot = i => top3[i] ? `<div class="${cls[i]} ${top3[i].name === me ? 'me' : ''}"><div class="nm">${esc(top3[i].name)}</div><div class="pt">${top3[i].score}</div><div class="bar2">${medal[i]}</div></div>` : '';
+  const pod = top3.length ? `<div class="pod">${slot(1)}${slot(0)}${slot(2)}</div>` : '';
+  const rest = t.slice(3).map((p, i) => `<div class="row ${p.name === me ? 'me' : ''}"><span>${i + 4}. ${esc(p.name)}</span><b>${p.score}</b></div>`).join('');
+  return pod + rest;
+};
+s.on('reveal', d => {
+  clearInterval(timer); const mx = Math.max(...d.counts, 1), t0 = Date.now();
+  if (d.last) fireworks(7000, true);
+  h(`<div class="okbar">✔ Đáp án đúng: ${SYM[d.correct]} ${otx(d.options[d.correct])}</div>
+  ${d.options.map((o, i) => `<div class="${i === d.correct ? '' : 'dim'}" style="text-align:left;margin:8px 0">${SYM[i]} ${otx(o)} <span class="bar" style="width:${d.counts[i] / mx * 60}%;background:${COL[i]}"></span> ${d.counts[i]}</div>`).join('')}
+  <h2>Bảng xếp hạng</h2>${board(d.top)}<button id="nx" disabled></button><div id="au2" class="big" style="color:#ffd602"></div>`);
+  const label = d.last ? 'Kết thúc' : 'Câu tiếp theo';
+  const tick = () => {
+    const e = (Date.now() - t0) / 1000, m = Math.ceil(d.min - e);
+    if (!$('nx')) return clearInterval(timer);
+    $('nx').disabled = m > 0; $('nx').textContent = m > 0 ? `${label} (chờ ${m}s)` : label; $('nx').onclick = () => s.emit('host:next');
+    if (d.auto) $('au2').textContent = `Tự động qua sau ${Math.max(Math.ceil(d.wait - e), 0)}s`;
+  };
+  tick(); timer = setInterval(tick, 500);
+});
+s.on('result', r => {
+  clearInterval(timer);
+  const isLeader = r.rank === 1 && r.score > 0;
+  if (isLeader) fireworks(5500, true);
+  const leaderBadge = isLeader ? `<div class="pill t pulse" style="display:inline-block;margin:8px auto;padding:6px 18px;font-size:1.1rem;box-shadow:0 0 20px #ffd602bb">👑 BẠN ĐANG DẪN ĐẦU #1! 🏆</div>` : '';
+  h(`<div class="pres"><div class="panel ${r.correct ? 'ok' : 'bad'}"><h1>${r.answered ? (r.correct ? 'ĐÚNG! 🎉' : 'SAI 😅') : 'Hết giờ ⏰'}</h1>
+  ${leaderBadge}
+  <div class="big">+${r.gained} điểm</div>${r.correct ? '' : `<div>Đáp án đúng: <b>${otx(r.correctText)}</b></div>`}</div>
+  <div class="big" style="${isLeader ? 'color:#ffd602;text-shadow:0 0 10px #ffd60288' : ''}">Tổng ${r.score} điểm · Hạng ${r.rank}/${r.total}</div><div id="pn" class="big" style="color:#ffd602"></div>
+  <h2>Bảng xếp hạng</h2>${board(r.top, r.name)}</div>`);
+  const left0 = r.left, t0 = Date.now(), lab = r.last ? 'Kết quả cuối cùng sau' : 'Câu tiếp theo sau';
+  const tk = () => { if (!$('pn')) return clearInterval(timer); $('pn').textContent = left0 == null ? 'Chờ host chuyển câu…' : `${lab} ${Math.max(Math.ceil(left0 - (Date.now() - t0) / 1000), 0)}s`; };
+  tk(); timer = setInterval(tk, 500);
+});
+s.on('saveStatus', d => { const e = $('sv'); if (e) { e.style.color = d.ok ? '#9f9' : '#ffd602'; e.textContent = d.ok ? '✔ Đã lưu kết quả vào máy host' : `⚠ Chưa lưu được kết quả (${d.msg}). Kết quả vẫn có trong trình duyệt.`; } });
+let lastEnd = null;
+function showEnd(d, saved, meta) {
+  h(`<h1>🏆 Kết quả</h1>${meta ? `<div>${esc(meta.title)} · ${esc(meta.date)}</div>` : ''}${board(d.full || d.top)}${d.full && !saved ? '<div id="sl" class="er"></div><div id="sv" class="er"></div>' : ''}` +
+    (d.full ? `<button onclick="csv()">⬇ Tải bảng điểm (CSV)</button><button class="ghost" onclick="leaveEnd(${saved})">Về trang host</button>` : `<button onclick="location.reload()">Chơi lại</button>`));
+}
+async function leaveEnd(saved) {
+  if (saved || await ask('Rời khỏi trang kết quả?<br><small>Kết quả đã được lưu trong trình duyệt. Xem lại ở mục "Kết quả đã lưu" trên trang host.</small>', 'Có, rời đi', 'Không, ở lại')) hostMenu();
+}
+s.on('end', d => {
+  clearInterval(timer); lastEnd = d; localStorage.removeItem('qb'); gameActive = false; stopMusic();
+  const okLocal = d.full ? saveRes(d) : true;
+  showEnd(d, false); fireworks(12000, true); applause();
+  if (!okLocal && $('sl')) $('sl').textContent = '⚠ Không lưu được vào trình duyệt (bộ nhớ đầy?). Hãy tải CSV ngay!';
+});
+function csv() {
+  const d = lastEnd, e = v => { v = String(v); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const rows = [['Hạng', 'Tên', 'Tổng điểm', 'Số câu đúng', ...d.qs.map((q, i) => `Câu ${i + 1}: ${q.slice(0, 40)}`)],
+    ...d.full.map((p, i) => [i + 1, p.name, p.score, p.correct, ...p.log])];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(r => r.map(e).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'ket-qua.csv'; a.click();
+}
+s.on('closed', () => { localStorage.removeItem('qb'); role = ''; alert('Host đã thoát phòng'); home(); });
+let saved = JSON.parse(localStorage.qb || 'null');
+if (saved && Date.now() - (saved.t || 0) > 6 * 3600e3) { localStorage.removeItem('qb'); saved = null; }
+const qrPin = new URLSearchParams(location.search).get('pin');
+if (saved && qrPin && qrPin !== saved.pin) { localStorage.removeItem('qb'); saved = null; }
+const savedH = JSON.parse(sessionStorage.qbh || 'null');
+if (saved) doJoin(saved.pin, saved.name, saved.token, true);
+else if (sessionStorage.qbp && savedH) { tok = sessionStorage.qbp; hostRejoin(savedH, true); }
+else if (sessionStorage.qbp) { tok = sessionStorage.qbp; hostMenu(true); }
+else home();
+</script></body></html>

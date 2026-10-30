@@ -5,7 +5,7 @@
 <meta property="og:title" content="QuizBlast">
 <meta property="og:description" content="QuizBlast - Đố vui, thi đua, bứt phá. Trò chơi trắc nghiệm tương tác thời gian thực.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&family=Bangers&family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Dancing+Script:wght@600;700&family=Lobster&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
 <style>
 :root{--p:#46178f;--p-dark:#2a0b63;--y:#ffd602;--pink:#ff4d8d;--teal:#26d0ce;--bg:#1d0a45}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -75,20 +75,69 @@ button.sm{width:auto;padding:8px 16px;font-size:1rem;min-height:40px}
 .tbar i{display:block;height:100%;background:linear-gradient(90deg,#26d07c,#ffd602 60%,#e21b3c);transition:width .5s linear;border-radius:10px}
 .qcard{background:#fff;color:#22084c;border-radius:22px;padding:22px 18px;margin:14px 0;font-family:"Baloo 2","Nunito",sans-serif;font-weight:800;font-size:clamp(1.4rem,5.5vw,2.15rem);line-height:1.32;box-shadow:0 8px 0 rgba(0,0,0,0.18),0 16px 36px rgba(0,0,0,0.25);text-shadow:none;animation:pop .35s ease-out both}
 
-/* Lưới Đáp án Nâng Cấp (Thumb-friendly & rõ chữ) */
+/* ===== Banner thiết kế được (kéo thả) + trình chỉnh sửa ===== */
+.brand.dz{display:block;position:relative;padding:0;overflow:hidden;gap:0;text-align:left;--u:3px}
+.brand.dz .bel{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;line-height:1.12;margin:0;text-align:center;text-shadow:0 2px 4px #0005;pointer-events:none}
+.brand.dz img.bel{height:auto;max-width:none;max-height:none;object-fit:contain;text-shadow:none}
+.brand.dz .bel.ph{opacity:.45;font-style:italic}
+.brand.dz.ed .bel{pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;outline:2px dashed transparent;outline-offset:4px;border-radius:4px}
+.brand.dz.ed .bel:hover{outline-color:#ffffff99}
+.brand.dz.ed .bel.sel{outline:2px solid var(--y)}
+.brand.dz.ed .bel[contenteditable=true]{cursor:text;user-select:text;-webkit-user-select:text;outline:2px solid var(--teal);background:#0006}
+.brand.dz .guide{position:absolute;background:var(--teal);pointer-events:none;opacity:0;transition:opacity .1s}
+.brand.dz .guide.v{left:50%;top:0;bottom:0;width:1px}.brand.dz .guide.h{top:50%;left:0;right:0;height:1px}
+.dzov{position:fixed;inset:0;z-index:15;background:linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45);background-size:cover;background-position:center;color:#fff;display:flex;flex-direction:column;text-align:left}
+.dz-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#0009;backdrop-filter:blur(6px);z-index:2}
+.dz-top button,.dz-panel button{width:auto;margin:0;padding:8px 14px;font-size:.95rem;box-shadow:none;border-radius:10px;background:#ffffff22;border:1px solid #ffffff44;color:#fff;font-weight:800;cursor:pointer}
+.dz-top button.on,.dz-panel button.on{background:var(--y);color:#3a1670;border-color:var(--y)}
+.dz-seg{display:flex;gap:6px}.dz-hint{flex:1;opacity:.8;font-size:.88rem;min-width:200px}.dz-act{display:flex;gap:8px;flex-wrap:wrap}
+#dzSave{background:#26c45a;border-color:#26c45a}
+.dz-stage{flex:1;overflow:auto;padding:14px 10px 24px;display:flex;justify-content:center;align-items:flex-start}
+.dz-frame.host{width:min(980px,100%);text-align:center}
+.dz-frame.host main{padding:20px;max-width:none;text-align:center}
+.dz-frame.phone{width:410px;max-width:100%;border:10px solid #15102b;border-radius:36px;overflow:hidden;box-shadow:0 12px 40px #000a;text-align:center}
+.dz-frame.phone .brand{margin:8px 10px 0}
+.dz-if{display:block;width:100%;height:560px;border:0;background:transparent;pointer-events:none}
+.dz-panel{background:#150a35;border-top:2px solid #ffffff33;padding:10px 14px calc(12px + env(safe-area-inset-bottom));max-height:42vh;overflow:auto;z-index:2}
+.dz-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dz-ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.dz-ctl label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;font-weight:800;opacity:.95}
+.dz-ctl label.w2{grid-column:span 2}
+.dz-ctl input,.dz-ctl select{margin:0;padding:8px 10px;font-size:.95rem;border-radius:10px;border:2px solid #ffffff33;background:#ffffff14;color:#fff;width:100%}
+.dz-ctl select option{color:#222}
+.dz-ctl input[type=color]{padding:2px;height:38px;width:60px;flex:none;cursor:pointer}
+.dz-ctl input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--y);height:28px}
+.dz-ctl .rw{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dz-ctl .rw input[type=range]{flex:1;min-width:90px}
+.dz-ctl b{color:var(--y)}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;display:inline-block;flex:none}
+@media(max-width:640px){.dz-ctl label.w2{grid-column:auto}.dz-hint{display:none}.dz-panel{max-height:48vh}}
+
+/* ===== Người chơi trên điện thoại: câu hỏi (trên) tách hẳn khay đáp án (dưới) ===== */
+.pq{display:flex;flex-direction:column;gap:10px;text-align:center;margin-bottom:-20px}
+.pq-top .meta .pill{font-size:1.2rem;padding:6px 18px}
+.pq-top .tbar{height:14px;margin:8px 0 0}
+.pq-q{flex:1 1 0;min-height:120px;display:flex}
+.pq-q .qcard{flex:1;margin:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;overflow:auto;padding:16px 14px;font-size:clamp(1.7rem,7.2vw,2.6rem);line-height:1.28;text-align:center}
+.pq-sheet{flex:0 0 auto;background:#0000005c;border-radius:26px 26px 0 0;padding:12px 12px calc(14px + env(safe-area-inset-bottom,0px));margin:0 -20px;box-shadow:0 -8px 26px #0006}
+@media(max-width:480px){.pq{margin-bottom:-12px}.pq-sheet{margin:0 -12px}}
+.pq-hint{font-weight:800;font-size:1.05rem;opacity:.92;margin:0 0 8px}
+.pq-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.pq-grid .ans-btn{display:flex;align-items:center;gap:12px;width:100%;height:auto;margin:0;min-height:clamp(68px,10.5vh,110px);padding:10px 14px;font-size:clamp(1.2rem,5.4vw,1.6rem);line-height:1.2;font-weight:800;text-align:left;color:#fff;border:0;border-radius:18px;box-shadow:0 5px 0 #0004;background-image:linear-gradient(#ffffff2e,#00000026);text-shadow:0 2px 3px #0006;transition:transform .08s ease,filter .12s,box-shadow .12s}
+.pq-grid .ans-btn .sy{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:#ffffff38;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.pq-grid .ans-btn .tx{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.pq-grid .ans-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #0004}
+.pq-grid .ans-btn:disabled{opacity:.7}
+.pq-grid .ans-btn.selected{outline:4px solid #ffd602;box-shadow:0 0 24px rgba(255,214,2,0.85),0 5px 0 #0004!important;transform:translateY(-2px) scale(1.02)}
+.pq-grid .ans-btn.dimmed{opacity:.35;filter:grayscale(40%)}
+@media(min-width:700px),(orientation:landscape) and (min-width:560px){.pq-grid{grid-template-columns:1fr 1fr}}
+
+/* ===== Lưới màn hình chiếu của Host ===== */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.ans-btn,.grid .panel{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px;min-height:98px;height:auto;padding:14px 16px;border-radius:18px;border:0;box-shadow:0 6px 0 rgba(0,0,0,0.25);text-align:left;word-break:break-word;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s ease,filter .12s,box-shadow .12s;background-image:linear-gradient(#ffffff2e,#00000026)!important;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.35)}
-.ans-btn:active:not(:disabled){transform:translateY(3px) scale(0.98)!important;box-shadow:0 2px 0 rgba(0,0,0,0.25)!important;filter:brightness(1.15)!important}
-.ans-btn.selected{outline:4px solid #ffd602;box-shadow:0 0 24px rgba(255,214,2,0.85),0 6px 0 rgba(0,0,0,0.25)!important;transform:translateY(-2px) scale(1.02)}
-.ans-btn.dimmed{opacity:.35;filter:grayscale(40%)}
+.grid .panel{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px;min-height:98px;height:auto;padding:14px 16px;border-radius:18px;border:0;box-shadow:0 6px 0 rgba(0,0,0,0.25);text-align:left;word-break:break-word;background-image:linear-gradient(#ffffff2e,#00000026)!important;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.35)}
 .ans-sym{font-size:1.65rem;width:42px;height:42px;min-width:42px;display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.22);border-radius:12px;line-height:1;text-shadow:0 2px 4px rgba(0,0,0,0.45);flex-shrink:0}
 .ans-txt{flex:1;font-size:clamp(1.12rem,4.2vw,1.38rem);font-weight:800;line-height:1.25}
 .ans-sym-inline{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:1.1rem;color:#fff;margin-right:6px}
-
-/* Chế độ đáp án dài: tự động 1 cột đọc dễ dàng */
-.grid.long-opts{grid-template-columns:1fr!important;gap:11px}
-.grid.long-opts .ans-btn,.grid.long-opts .panel{min-height:78px;padding:15px 18px}
-.grid.long-opts .ans-txt{font-size:clamp(1.18rem,4.5vw,1.42rem)}
 
 /* Màn hình Đã gửi câu trả lời */
 .player-sent-box{background:rgba(255,255,255,0.16);border:2px solid rgba(255,255,255,0.35);backdrop-filter:blur(12px);border-radius:26px;padding:36px 20px;margin-top:24px;box-shadow:0 18px 40px rgba(0,0,0,0.3);animation:pop .35s ease-out both}
@@ -491,7 +540,7 @@ function buildProfile(m) {
   return { ...v,
     bgData: (m ? (mBg !== undefined ? mBg : bgData) : bgData) || '',
     logoData: (m ? (mLogo !== undefined ? mLogo : logoData) : logoData) || '',
-    brand: { title: g('bt') ? g('bt').value.trim() : '', sub: g('bs') ? g('bs').value.trim() : '', color: g('bc') ? g('bc').value : '#ffd602' } };
+    brand: { title: g('bt') ? g('bt').value.trim() : '', sub: g('bs') ? g('bs').value.trim() : '', color: g('bc') ? g('bc').value : '#ffd602', style: brandStyle } };
 }
 // Nhớ lại phần cài đặt của form (bộ câu hỏi, qua câu, thời gian) để mở lại bảng điều khiển vẫn còn nguyên
 function saveForm() {
@@ -549,10 +598,11 @@ function applyProfile(p, quiet) {
   if ($('bt')) $('bt').value = (p.brand && p.brand.title) || '';
   if ($('bs')) $('bs').value = (p.brand && p.brand.sub) || '';
   if ($('bc')) $('bc').value = (p.brand && p.brand.color) || '#ffd602';
+  brandStyle = (p.brand && p.brand.style) || null;
   logoData = p.logoData || ''; refreshLogo();
   try {
     localStorage.qb_set = JSON.stringify({ music: $('mu') ? $('mu').value : p.music, vol: p.vol ?? 50 });
-    localStorage.qb_brand = JSON.stringify({ title: (p.brand && p.brand.title) || '', sub: (p.brand && p.brand.sub) || '', color: (p.brand && p.brand.color) || '#ffd602' });
+    localStorage.qb_brand = JSON.stringify({ title: (p.brand && p.brand.title) || '', sub: (p.brand && p.brand.sub) || '', color: (p.brand && p.brand.color) || '#ffd602', style: brandStyle });
     if (bgData) localStorage.qb_bg = bgData; else localStorage.removeItem('qb_bg');
     if (logoData) localStorage.qb_logo = logoData; else localStorage.removeItem('qb_logo');
   } catch {}
@@ -737,7 +787,7 @@ async function hostMenu(fromLogin) {
   <input id="bs" value="Chào mừng các bạn đến với event hachihi.vn" placeholder="Dòng chào (VD: Chào mừng các bạn đến với …)" maxlength="120">
   <div class="two"><div>Màu nhấn<input type="color" id="bc" value="#ffd602" style="height:46px;padding:2px"></div>
   <div>Logo (PNG/JPG, tự thu nhỏ)<input type="file" id="blf" accept="image/*" onchange="loadLogo(this.files[0])"><small id="bls"></small></div></div>
-  <button class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="previewUI()">👁 Xem thử giao diện thực tế (nền + banner + âm thanh)</button>
+  <button type="button" class="ghost" style="color:#1368ce;border-color:#1368ce" onclick="openBrandEditor()">🎨 Xem / sửa giao diện (kéo thả tiêu đề, font, cỡ chữ, màu)</button>
   <button onclick="create()">Tạo phòng</button></div>
   ${resHtml}
   <div class="card"><b>Nạp câu hỏi mới</b><small>Cột A: câu hỏi · B,C,D,E: đáp án A,B,C,D · F: đáp án đúng (A/B/C/D) · G (tuỳ chọn): số giây</small>
@@ -758,7 +808,7 @@ async function hostMenu(fromLogin) {
   $('mu').onchange = () => { $('muf').style.display = $('mu').value === 'custom' ? 'block' : 'none'; };
   $('muf').onchange = e => { if (e.target.files[0]) customUrl = URL.createObjectURL(e.target.files[0]); };
   bgData = localStorage.qb_bg || ''; refreshBg();
-  const bs = JSON.parse(localStorage.qb_brand || '{}'); $('bt').value = bs.title || ''; $('bs').value = bs.sub || ''; $('bc').value = bs.color || '#ffd602';
+  const bs = JSON.parse(localStorage.qb_brand || '{}'); $('bt').value = bs.title || ''; $('bs').value = bs.sub || ''; $('bc').value = bs.color || '#ffd602'; brandStyle = bs.style || null;
   logoData = localStorage.qb_logo || ''; refreshLogo();
   restoreForm();
   const ap = getProfiles().find(x => x.id === activeProfileId);
@@ -854,8 +904,8 @@ function qrSvg(text) {
 }
 
 // ---- Phòng chờ của host ----
-//const joinUrl = pin => location.origin + '/?pin=' + encodeURIComponent(pin);   // link có sẵn PIN (QR và nút Sao chép dùng link này)
-const joinUrl = pin => 'http://kahoot.hachihi.vn/?pin=' + encodeURIComponent(pin);
+const joinUrl = pin => location.origin + '/?pin=' + encodeURIComponent(pin);   // link có sẵn PIN (QR và nút Sao chép dùng link này)
+//const joinUrl = pin => 'http://kahoot.hachihi.vn/?pin=' + encodeURIComponent(pin);
   function lbMenu(open) {
   const d = $('lbDd'); if (!d) return;
   d.hidden = open === undefined ? !d.hidden : !open;
@@ -967,6 +1017,7 @@ async function openRoomSettings() {
   if ($('smod')) $('smod').remove();
   mBg = undefined; mLogo = undefined;
   const st = curRoomSettings || {};
+  if (st.brand && st.brand.style) brandStyle = st.brand.style;
   const d = document.createElement('div');
   d.id = 'smod';
   d.className = 'mod';
@@ -1014,6 +1065,7 @@ async function openRoomSettings() {
         <div>Hình nền<input type="file" accept="image/*" onchange="modalPickBg(this.files[0])"><small id="m_bgs"></small></div>
       </div>
       <div style="margin-top:8px">Logo (PNG/JPG, tự thu nhỏ)<input type="file" accept="image/*" onchange="modalPickLogo(this.files[0])"><small id="m_bls"></small></div>
+      <button type="button" class="ghost" style="color:#1368ce;border-color:#1368ce;margin-top:10px" onclick="openBrandEditor()">🎨 Xem / sửa giao diện (kéo thả tiêu đề, font, cỡ chữ, màu)</button>
 
       <div id="m_err" class="er" style="margin-top:8px"></div>
       <div style="display:flex;gap:10px;margin-top:16px">
@@ -1078,6 +1130,7 @@ function onModalSelectProfile(profId) {
   set('bt', e => e.value = (p.brand && p.brand.title) || '');
   set('bs', e => e.value = (p.brand && p.brand.sub) || '');
   set('bc', e => e.value = (p.brand && p.brand.color) || '#ffd602');
+  brandStyle = (p.brand && p.brand.style) || null;
   mBg = p.bgData || ''; mLogo = p.logoData || ''; modalBgStatus(); modalLogoStatus();
   if (!quizOk) showToast('⚠ Bộ câu hỏi của profile không còn, đang giữ bộ câu hỏi hiện tại', true);
   else showToast(`✔ Đã nạp Profile "${p.name}" vào bảng sửa! Bấm "Lưu cài đặt" để áp dụng cho phòng.`);
@@ -1096,22 +1149,23 @@ async function saveModalAsProfile() {
 async function saveRoomSettings() {
   const v = formVals(true);
   if (!v.quizId) { if ($('m_err')) $('m_err').textContent = 'Chưa chọn bộ câu hỏi'; return; }
-  const brand = { title: $('m_bt').value.trim(), sub: $('m_bs').value.trim(), color: $('m_bc').value };
+  const brand = { title: $('m_bt').value.trim(), sub: $('m_bs').value.trim(), color: $('m_bc').value, style: brandStyle };
   if (mLogo !== undefined) brand.logo = mLogo;                 // chỉ gửi logo/nền khi host thật sự đổi -> không bao giờ vô tình xoá
   const payload = { id: v.quizId, auto: v.auto, shuffleQ: v.shuffleQ, shuffleA: v.shuffleA, wait: v.wait, min: v.min, brand };
   if (mBg !== undefined) payload.bg = mBg;
   s.emit('host:update_settings', payload, r => {
     if (!r || r.err) { if ($('m_err')) $('m_err').textContent = (r && r.err) || 'Không lưu được, hãy thử lại'; return; }
     curTitle = v.quizTitle;
-    curRoomSettings = { ...(curRoomSettings || {}), ...r.settings, music: v.music, vol: v.vol };
+    curRoomSettings = { ...(curRoomSettings || {}), ...r.settings, music: v.music, vol: v.vol, brand };
     try {
       if (mBg !== undefined) { bgData = mBg; if (mBg) localStorage.qb_bg = mBg; else localStorage.removeItem('qb_bg'); }
       if (mLogo !== undefined) { logoData = mLogo; if (mLogo) localStorage.qb_logo = mLogo; else localStorage.removeItem('qb_logo'); }
       localStorage.qb_set = JSON.stringify({ music: v.music, vol: v.vol });
-      localStorage.qb_brand = JSON.stringify(brand.logo === undefined ? brand : { title: brand.title, sub: brand.sub, color: brand.color });
+      localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color, style: brand.style });
       localStorage.qb_form = JSON.stringify({ quizId: v.quizId, auto: v.auto, shuffleQ: v.shuffleQ, shuffleA: v.shuffleA, wait: v.wait, min: v.min });
       const hv = JSON.parse(sessionStorage.qbh || '{}'); hv.title = curTitle; sessionStorage.qbh = JSON.stringify(hv);
     } catch {}
+    setBrand(brand);
     stopMusic();
     if (v.music !== 'none') { const src = musicSrc(v.music); if (src) startMusic(src, v.vol / 100); }
     if ($('smod')) $('smod').remove();
@@ -1124,7 +1178,7 @@ function create() {
   try { localStorage.qb_set = JSON.stringify({ music: f.music, vol: f.vol }); } catch {}
   saveForm();
   curTitle = f.quizTitle;
-  const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color }); } catch {}
+  const brand = readBrand(); try { localStorage.qb_brand = JSON.stringify({ title: brand.title, sub: brand.sub, color: brand.color, style: brand.style }); } catch {}
   curRoomSettings = { id: f.quizId, title: curTitle, auto: f.auto, shuffleQ: f.shuffleQ, shuffleA: f.shuffleA, wait: f.wait, min: f.min,
     music: f.music, vol: f.vol, hasBg: !!bgData, hasLogo: !!logoData, brand };
   s.emit('host:create', { token: tok, id: f.quizId, auto: f.auto, shuffleQ: f.shuffleQ, shuffleA: f.shuffleA, wait: f.wait, min: f.min, bg: bgData, brand }, r => {
@@ -1219,13 +1273,66 @@ const bgCss = u => u ? `linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url("${u}
 function setBg(u) { const b = document.body.style; b.backgroundImage = bgCss(u); b.backgroundSize = 'cover'; b.backgroundPosition = 'center'; b.backgroundAttachment = 'fixed'; }
 // ---- banner sự kiện + xem thử ----
 let logoData = '';
-const brandHtml = b => {
-  if (!b || !(b.title || b.sub || b.logo)) return '';
+// ---- Kiểu banner: mọi vị trí/cỡ chữ tính theo % chiều rộng banner nên máy chiếu và điện thoại hiển thị cùng tỉ lệ ----
+const FONTS = [
+  ['baloo', 'Baloo 2 (mặc định)', '\'Baloo 2\',\'Nunito\',sans-serif'],
+  ['nunito', 'Nunito (tròn, dễ đọc)', '\'Nunito\',\'Segoe UI\',sans-serif'],
+  ['bevn', 'Be Vietnam Pro (hiện đại)', '\'Be Vietnam Pro\',\'Segoe UI\',sans-serif'],
+  ['mont', 'Montserrat (rộng, mạnh)', '\'Montserrat\',\'Segoe UI\',sans-serif'],
+  ['oswald', 'Oswald (chữ hẹp)', '\'Oswald\',\'Arial Narrow\',sans-serif'],
+  ['play', 'Playfair Display (sang trọng)', '\'Playfair Display\',Georgia,serif'],
+  ['paci', 'Pacifico (chữ viết tay)', '\'Pacifico\',cursive'],
+  ['lobster', 'Lobster (chữ viết đậm)', '\'Lobster\',cursive'],
+  ['dancing', 'Dancing Script (thư pháp)', '\'Dancing Script\',cursive'],
+  ['bangers', 'Bangers (truyện tranh)', '\'Bangers\',cursive']
+];
+const WEIGHTS = [[400, 'Thường'], [600, 'Vừa'], [700, 'Đậm'], [800, 'Rất đậm'], [900, 'Siêu đậm']];
+const DEF_STYLE = lg => ({ h: 14, bg: '#000000', ba: 40, bw: 4,
+  t: { x: lg ? 55 : 50, y: 36, s: 5, f: 'baloo', w: 800, c: '#ffffff', i: 0 },
+  s: { x: lg ? 55 : 50, y: 72, s: 3.2, f: 'nunito', w: 600, c: '#ffffff', i: 0 },
+  l: { x: 9, y: 50, s: 9 } });
+function mergeStyle(st, lg) {
+  const d = DEF_STYLE(lg); if (!st || typeof st !== 'object') return d;
+  for (const k of ['t', 's', 'l']) Object.assign(d[k], st[k] || {});
+  for (const k of ['h', 'bg', 'ba', 'bw']) if (st[k] != null) d[k] = st[k];
+  return d;
+}
+let brandStyle = null;
+const hexA = (h, a) => { const n = parseInt(String(h).slice(1), 16) || 0; return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a / 100})`; };
+function elStyle(k, e) {
+  const pos = `left:${e.x}%;top:${e.y}%;`;
+  if (k === 'l') return pos + `width:calc(var(--u,3px)*${e.s});`;
+  const f = FONTS.find(x => x[0] === e.f) || FONTS[0];
+  return pos + `font-size:calc(var(--u,3px)*${e.s});font-family:${f[2]};font-weight:${e.w};font-style:${e.i ? 'italic' : 'normal'};color:${/^#[0-9a-f]{6}$/i.test(e.c) ? e.c : '#fff'};`;
+}
+// ed = true: dùng trong trình chỉnh sửa (luôn hiện chỗ trống để kéo thả)
+const brandHtml = (b, ed) => {
+  if (!b || (!ed && !(b.title || b.sub || b.logo))) return '';
+  const lg = !!b.logo, st = mergeStyle(b.style, lg);
   const col = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#ffd602';
-  return `<div class="brand" style="border-color:${col}">${b.logo ? `<img src="${esc(b.logo)}" alt="">` : ''}<div>${b.title ? `<div class="bt">${esc(b.title)}</div>` : ''}${b.sub ? `<div class="bs">${esc(b.sub)}</div>` : ''}</div></div>`;
+  const T = (k, txt, ph) => (txt || ed) ? `<div class="bel${txt ? '' : ' ph'}" data-k="${k}" data-s="${st[k].s}" style="${elStyle(k, st[k])}">${esc(txt || ph)}</div>` : '';
+  return `<div class="brand dz${ed ? ' ed' : ''}" style="aspect-ratio:100/${st.h};background:${hexA(st.bg, st.ba)};border-bottom:${st.bw}px solid ${col}">${lg ? `<img class="bel" data-k="l" src="${esc(b.logo)}" alt="" draggable="false" style="${elStyle('l', st.l)}">` : ''}${T('t', b.title, 'Tiêu đề chương trình')}${T('s', b.sub, 'Dòng phụ')}${ed ? '<i class="guide v"></i><i class="guide h"></i>' : ''}</div>`;
 };
-const setBrand = b => { const e = $('brand'); if (e) e.innerHTML = brandHtml(b); };
-const readBrand = () => ({ title: $('bt').value.trim(), sub: $('bs').value.trim(), color: $('bc').value, logo: logoData });
+// Tính cỡ theo chiều rộng thực của banner; chữ quá dài thì tự co (rồi xuống dòng) cho vừa khung
+function fitBrand() {
+  document.querySelectorAll('.brand.dz').forEach(bn => {
+    const W = bn.clientWidth; if (!W) return;
+    const u = W / 100; bn.style.setProperty('--u', u + 'px');
+    bn.querySelectorAll('.bel[data-s]').forEach(el => {
+      const base = parseFloat(el.dataset.s) * u, x = parseFloat(el.style.left); const xx = isNaN(x) ? 50 : x;
+      const avail = Math.max(u * 10, 2 * Math.min(xx, 100 - xx) / 100 * W - 2 * u);
+      el.style.whiteSpace = 'nowrap'; el.style.width = ''; el.style.fontSize = base + 'px';
+      const sw = el.scrollWidth;
+      if (sw > avail) { el.style.fontSize = Math.max(base * .6, base * avail / sw) + 'px'; if (el.scrollWidth > avail + 1) { el.style.whiteSpace = 'normal'; el.style.width = avail + 'px'; } }
+    });
+  });
+}
+const setBrand = b => { const e = $('brand'); if (e) { e.innerHTML = brandHtml(b); fitBrand(); } };
+window.addEventListener('resize', () => { fitBrand(); if (typeof fitPQ === 'function') fitPQ(); if (typeof fitQ === 'function') fitQ(); });
+window.addEventListener('orientationchange', () => setTimeout(() => { fitBrand(); if (typeof fitPQ === 'function') fitPQ(); if (typeof fitQ === 'function') fitQ(); }, 300));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitBrand(); if (typeof fitQ === 'function') fitQ(); });
+new MutationObserver(() => { if (!fitBrand.busy) { fitBrand.busy = 1; requestAnimationFrame(() => { fitBrand(); fitBrand.busy = 0; }); } }).observe(document.body, { childList: true, subtree: true });
+const readBrand = () => ({ title: $('bt').value.trim(), sub: $('bs').value.trim(), color: $('bc').value, logo: logoData, style: brandStyle });
 s.on('brand', b => setBrand(b));
 s.on('host:settings', d => { if (d) { curRoomSettings = { ...(curRoomSettings || {}), ...d }; if (d.title) curTitle = d.title; } });
 function refreshLogo() { if (!$('bls')) return; $('bls').innerHTML = logoData ? '✔ Đã chọn logo · <a href="#" style="color:#1368ce" onclick="clearLogo();return false">xoá</a>' : 'Chưa chọn'; }
@@ -1244,96 +1351,200 @@ async function loadLogo(f) {
   try { logoData = await fileToLogo(f); try { localStorage.qb_logo = logoData; } catch {} refreshLogo(); }
   catch { if ($('bls')) $('bls').textContent = 'Không đọc được ảnh'; }
 }
-function previewUI() {
+function previewUI() { openBrandEditor(); }
+async function logoToData() {
+  if (logoData) return logoData;
+  const im = document.querySelector('#brand img.bel'); if (!im) return '';
+  try { const bl = await (await fetch(im.src)).blob(); return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch { return ''; }
+}
+const DZ_SW = ['#ffffff', '#ffd602', '#000000', '#ff4d8d', '#26d0ce', '#7CFC9A'];
+async function openBrandEditor() {
+  if ($('dzov')) return;
+  const inRoom = !!$('m_bt'), px = inRoom ? 'm_' : '';
+  const gv = id => $(id) ? $(id).value : '';
+  const logo0 = await logoToData();
+  const D = { title: gv(px + 'bt').trim(), sub: gv(px + 'bs').trim(), color: gv(px + 'bc') || '#ffd602', logo: logo0, style: mergeStyle(brandStyle, !!logo0) };
+  const orig = JSON.stringify(D);
+  let sel = 't', view = 'host';
+  const musicVal = gv('mu') || gv('m_mu') || 'none', volVal = (Number(gv('vol') || gv('m_vol')) || 50) / 100, msrc = musicSrc(musicVal);
   const prevPlaying = !bgm.paused;
-  const musicVal = ($('mu') ? $('mu').value : '') || ($('m_mu') ? $('m_mu').value : 'vui.wav');
-  const volVal = (($('vol') ? Number($('vol').value) : ($('m_vol') ? Number($('m_vol').value) : 50))) / 100;
-  const musicName = ($('mu') && $('mu').selectedOptions[0]) ? $('mu').selectedOptions[0].text : (($('m_mu') && $('m_mu').selectedOptions[0]) ? $('m_mu').selectedOptions[0].text : 'Nhạc nền');
-  const src = musicSrc(musicVal);
+  if ($('smod')) $('smod').style.display = 'none';
 
-  if (src && musicVal !== 'none') {
-    startMusic(src, volVal);
+  const d = document.createElement('div'); d.id = 'dzov'; d.className = 'dzov';
+  d.style.backgroundImage = bgData ? bgCss(bgData) : '';
+  d.innerHTML = `<div class="dz-top">
+      <div class="dz-seg"><button type="button" data-v="host" class="on">🖥 Màn chiếu</button><button type="button" data-v="phone">📱 Điện thoại</button></div>
+      <span class="dz-hint">Kéo thả để di chuyển · bấm đúp để sửa chữ · phím mũi tên để nhích</span>
+      <div class="dz-act">${msrc && musicVal !== 'none' ? '<button type="button" id="dzSnd">🔊 Nhạc</button>' : ''}<button type="button" id="dzReset">↺ Mặc định</button><button type="button" id="dzCancel">Hủy</button><button type="button" id="dzSave">💾 Lưu</button></div>
+    </div>
+    <div class="dz-stage" id="dzStage"></div>
+    <div class="dz-panel" id="dzPanel"></div>`;
+  document.body.appendChild(d);
+  const bnEl = () => d.querySelector('#dzBanner .brand');
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  const hostSample = `<div class="meta"><span class="pill">Câu 2/5</span><span class="pill t">⏱ <b>11</b>s</span></div><div class="tbar"><i style="width:62%"></i></div>
+    <div class="qcard">Câu 2. Khi một đồng nghiệp hỗ trợ bạn xử lý công việc gấp, bạn nên làm gì?</div>
+    <div class="grid">${['Xem đó là việc đương nhiên và không cần phản hồi.', 'Chỉ cảm ơn nếu đồng nghiệp là quản lý.', 'Cảm ơn và ghi nhận sự hỗ trợ của đồng nghiệp.', 'Chờ đến cuối năm mới cần nhắc lại.'].map((o, i) => `<div class="panel" style="margin:0;background:${COL[i]}">${SYM[i]} ${o}</div>`).join('')}</div><div class="big">0 đã trả lời</div>`;
+  const phoneSample = `<div class="pq"><div class="pq-top"><div class="meta"><span class="pill">Câu 2/5</span><span class="pill t">⏱&nbsp;<b>11</b>s</span></div><div class="tbar"><i style="width:62%"></i></div></div>
+    <div class="pq-q"><div class="qcard">Câu 2. Khi một đồng nghiệp hỗ trợ bạn xử lý công việc gấp, bạn nên làm gì?</div></div>
+    <div class="pq-sheet"><div class="pq-hint">👇 Chọn đáp án</div><div class="pq-grid">${['Xem đó là việc đương nhiên', 'Chỉ cảm ơn nếu là quản lý', 'Cảm ơn và ghi nhận sự hỗ trợ', 'Chờ cuối năm mới nhắc lại'].map((o, i) => `<button class="ans-btn" style="background:${COL[i]}"><span class="sy">${SYM[i]}</span><span class="tx">${o}</span></button>`).join('')}</div></div></div>`;
+  const phoneDoc = () => `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&family=Bangers&family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Dancing+Script:wght@600;700&family=Lobster&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,700&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&display=swap"><style>${[...document.querySelectorAll('style')].map(x => x.textContent).join('\n')}
+html,body{background:transparent!important;min-height:0}body::before,body::after{display:none}</style></head><body><div id="wrap"><main id="app" style="padding:10px">${phoneSample}</main></div></body></html>`;
+
+  function renderBanner() {
+    d.querySelector('#dzBanner').innerHTML = brandHtml(D, true);
+    fitBrand(); markSel();
   }
-
-  const d = document.createElement('div');
-  d.className = 'pvw';
-  d.style.backgroundImage = bgCss(bgData);
-  d.innerHTML = `
-    <div style="position:fixed;top:14px;right:16px;z-index:25;display:flex;gap:8px">
-      ${src && musicVal !== 'none' ? `
-        <button id="pvwSndBtn" class="sm" style="background:#000b;color:#fff;border:1px solid #ffffff40;border-radius:12px;padding:8px 14px;cursor:pointer;font-weight:700">
-          ${bgm.muted || bgm.paused ? '🔇 Bật nhạc' : '🔊 Tắt nhạc'}
-        </button>
-      ` : ''}
-      <button id="pvwCloseBtn" class="sm" style="background:#000b;border:2px solid #ff5555;color:#ff8585;border-radius:12px;padding:8px 14px;cursor:pointer;font-weight:700">
-        ✕ Đóng xem thử
-      </button>
-    </div>
-    <div style="max-width:760px;margin:20px auto 40px;position:relative">
-      ${brandHtml(readBrand())}
-      <div style="margin:12px auto;display:inline-flex;align-items:center;gap:8px;background:#0008;padding:6px 18px;border-radius:20px;font-size:0.95rem;border:1px solid #ffffff30">
-        <span>🎵 ${musicVal === 'none' ? 'Không chọn nhạc nền' : 'Đang phát thử: ' + esc(musicName)} (${Math.round(volVal * 100)}%)</span>
-      </div>
-      <h1>Vào bằng PIN</h1>
-      <div class="pin">123456</div>
-      <div class="big">3 người chơi</div>
-      <span class="chip">An</span><span class="chip">Bình</span><span class="chip">Chi</span>
-      <div class="big" style="margin-top:26px">Câu 1/10 · 20s<br>Thủ đô của Việt Nam?</div>
-      <div class="grid">
-        ${['Hà Nội', 'Huế', 'Đà Nẵng', 'TP.HCM'].map((o, i) => `
-          <div class="panel" style="margin:0;background:${COL[i]};cursor:pointer" onclick="vibrateTap(40);event.stopPropagation()">
-            ${SYM[i]} ${o}
-          </div>
-        `).join('')}
-      </div>
-      <p style="margin-top:28px;opacity:.88;font-size:1.05rem">👆 Bấm vào bất kỳ đâu hoặc bấm nút "✕ Đóng xem thử" để thoát</p>
-    </div>
-  `;
-
-  let closed = false;
-  const close = () => {
-    if (closed) return;
-    closed = true;
-    if (!prevPlaying) {
-      stopMusic();
+  function markSel() { const b = bnEl(); if (b) b.querySelectorAll('.bel').forEach(e => e.classList.toggle('sel', e.dataset.k === sel)); }
+  function renderStage() {
+    const bgcss = bgData ? bgCss(bgData) + ',linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45)' : 'linear-gradient(160deg,#2b0a5e,#46178f 55%,#1d0a45)';
+    $('dzStage').innerHTML = view === 'host'
+      ? `<div class="dz-frame host"><div id="dzBanner"></div><main>${hostSample}</main></div>`
+      : `<div class="dz-frame phone" style="background:${bgcss};background-size:cover;background-position:center"><div id="dzBanner"></div><iframe id="dzIf" class="dz-if" title="Màn hình điện thoại"></iframe></div>`;
+    renderBanner();
+    if (view === 'phone') $('dzIf').srcdoc = phoneDoc();
+    d.querySelectorAll('.dz-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  }
+  const cur = () => D.style[sel];
+  function refreshEl(k) {
+    const el = d.querySelector(`#dzBanner [data-k="${k}"]`); if (!el) return renderBanner();
+    if (k !== 'l') { const txt = k === 't' ? D.title : D.sub; el.textContent = txt || (k === 't' ? 'Tiêu đề chương trình' : 'Dòng phụ'); el.classList.toggle('ph', !txt); el.dataset.s = D.style[k].s; }
+    el.setAttribute('style', elStyle(k, D.style[k])); fitBrand();
+  }
+  function applyBar() {
+    const b = bnEl(); if (!b) return; const st = D.style;
+    b.style.aspectRatio = `100/${st.h}`; b.style.background = hexA(st.bg, st.ba); b.style.borderBottom = `${st.bw}px solid ${D.color}`; fitBrand();
+  }
+  const rng = (id, lab, min, max, step, val, unit = '') => `<label>${lab} <b id="${id}v">${val}${unit}</b><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></label>`;
+  function renderPanel() {
+    const tabs = [['t', 'Tiêu đề'], ['s', 'Dòng phụ'], ['l', 'Logo'], ['b', 'Khung & màu']];
+    let h = `<div class="dz-tabs">${tabs.map(([k, n]) => `<button type="button" data-tab="${k}" class="${sel === k ? 'on' : ''}">${n}</button>`).join('')}</div><div class="dz-ctl">`;
+    if (sel === 't' || sel === 's') {
+      const e = D.style[sel];
+      h += `<label class="w2">Nội dung<input id="dzTxt" maxlength="${sel === 't' ? 80 : 120}" value="${esc(sel === 't' ? D.title : D.sub)}" placeholder="${sel === 't' ? 'Tên chương trình / sự kiện' : 'Dòng chào'}"></label>
+        <label>Cỡ chữ <b id="dzSzv">${Number(e.s).toFixed(1)}</b><span class="rw"><button type="button" data-act="dec">A−</button><input type="range" id="dzSz" min="1.5" max="12" step="0.1" value="${e.s}"><button type="button" data-act="inc">A+</button></span></label>
+        <label>Font chữ<select id="dzFont">${FONTS.map(f => `<option value="${f[0]}" ${f[0] === e.f ? 'selected' : ''}>${f[1]}</option>`).join('')}</select></label>
+        <label>Độ đậm<select id="dzW">${WEIGHTS.map(w => `<option value="${w[0]}" ${Number(e.w) === w[0] ? 'selected' : ''}>${w[1]}</option>`).join('')}</select></label>
+        <label>Màu chữ<span class="rw"><input type="color" id="dzCol" value="${e.c}">${DZ_SW.map(c => `<i class="sw" data-c="${c}" style="background:${c}"></i>`).join('')}</span></label>
+        <label class="w2">Kiểu &amp; căn<span class="rw"><button type="button" id="dzIt" class="${e.i ? 'on' : ''}"><i>I</i></button><button type="button" data-act="cx">⇔ Giữa ngang</button><button type="button" data-act="cy">⇕ Giữa dọc</button></span></label>`;
+    } else if (sel === 'l') {
+      h += D.logo ? rng('dzLs', 'Cỡ logo', 2, 30, 0.5, D.style.l.s) + `<label>Căn<span class="rw"><button type="button" data-act="cx">⇔ Giữa ngang</button><button type="button" data-act="cy">⇕ Giữa dọc</button></span></label>
+        <label>Logo<span class="rw"><input type="file" id="dzLf" accept="image/*"><button type="button" data-act="rmlogo">Xoá logo</button></span></label>`
+        : `<label class="w2">Chưa có logo<span class="rw"><input type="file" id="dzLf" accept="image/*"></span></label>`;
+    } else {
+      h += rng('dzH', 'Chiều cao banner', 6, 30, 0.5, D.style.h, '%') + `<label>Màu nền khung<span class="rw"><input type="color" id="dzBg" value="${D.style.bg}"></span></label>` +
+        rng('dzBa', 'Độ đậm nền', 0, 100, 1, D.style.ba, '%') + `<label>Màu viền dưới<span class="rw"><input type="color" id="dzAc" value="${D.color}"></span></label>` + rng('dzBw', 'Độ dày viền', 0, 12, 1, D.style.bw, 'px');
     }
-    d.remove();
-    document.removeEventListener('keydown', onKey);
-  };
+    $('dzPanel').innerHTML = h + '</div>';
+  }
+  function select(k) { if (sel === k) return markSel(); sel = k; markSel(); renderPanel(); }
 
-  const onKey = e => {
-    if (e.key === 'Escape') close();
+  // --- kéo thả / sửa chữ trực tiếp trên banner ---
+  const stage = d.querySelector('#dzStage');
+  stage.addEventListener('pointerdown', ev => {
+    const bn = ev.target.closest('.brand.dz'); if (!bn) return;
+    const el = ev.target.closest('.bel'); if (!el) return select('b');
+    if (el.isContentEditable) return;
+    ev.preventDefault();
+    const k = el.dataset.k; select(k);
+    const r = bn.getBoundingClientRect(), o = D.style[k], sx = ev.clientX, sy = ev.clientY, ox = o.x, oy = o.y;
+    const gv_ = bn.querySelector('.guide.v'), gh = bn.querySelector('.guide.h');
+    el.setPointerCapture(ev.pointerId); el.style.cursor = 'grabbing';
+    const mv = e => {
+      let nx = clamp(ox + (e.clientX - sx) / r.width * 100, 0, 100), ny = clamp(oy + (e.clientY - sy) / r.height * 100, 0, 100);
+      const snx = Math.abs(nx - 50) < 1.5, sny = Math.abs(ny - 50) < 3;
+      if (snx) nx = 50; if (sny) ny = 50;
+      o.x = Math.round(nx * 10) / 10; o.y = Math.round(ny * 10) / 10;
+      el.style.left = o.x + '%'; el.style.top = o.y + '%';
+      gv_.style.opacity = snx ? 1 : .35; gh.style.opacity = sny ? 1 : .35;
+      fitBrand();
+    };
+    const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.style.cursor = ''; gv_.style.opacity = 0; gh.style.opacity = 0; };
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  });
+  stage.addEventListener('dblclick', ev => {
+    const el = ev.target.closest('.bel'); if (!el || el.dataset.k === 'l') return;
+    const k = el.dataset.k, key = k === 't' ? 'title' : 'sub';
+    el.classList.remove('ph'); el.textContent = D[key]; el.style.whiteSpace = 'nowrap'; el.style.width = '';
+    el.contentEditable = 'true'; el.focus(); getSelection().selectAllChildren(el);
+    const done = () => { el.contentEditable = 'false'; D[key] = el.textContent.replace(/\s+/g, ' ').trim().slice(0, k === 't' ? 80 : 120); refreshEl(k); renderPanel(); };
+    el.addEventListener('blur', done, { once: true });
+    el.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); el.blur(); } });
+  });
+
+  // --- bảng điều khiển ---
+  const P = d.querySelector('#dzPanel');
+  P.addEventListener('input', ev => {
+    const t = ev.target, e = (sel === 't' || sel === 's') ? D.style[sel] : null;
+    if (t.id === 'dzTxt') { D[sel === 't' ? 'title' : 'sub'] = t.value; refreshEl(sel); }
+    else if (t.id === 'dzSz') { e.s = +t.value; $('dzSzv').textContent = e.s.toFixed(1); refreshEl(sel); }
+    else if (t.id === 'dzCol') { e.c = t.value; refreshEl(sel); }
+    else if (t.id === 'dzLs') { D.style.l.s = +t.value; $('dzLsv').textContent = t.value; refreshEl('l'); }
+    else if (t.id === 'dzH') { D.style.h = +t.value; $('dzHv').textContent = t.value + '%'; applyBar(); }
+    else if (t.id === 'dzBg') { D.style.bg = t.value; applyBar(); }
+    else if (t.id === 'dzBa') { D.style.ba = +t.value; $('dzBav').textContent = t.value + '%'; applyBar(); }
+    else if (t.id === 'dzAc') { D.color = t.value; applyBar(); }
+    else if (t.id === 'dzBw') { D.style.bw = +t.value; $('dzBwv').textContent = t.value + 'px'; applyBar(); }
+  });
+  P.addEventListener('change', async ev => {
+    const t = ev.target, e = (sel === 't' || sel === 's') ? D.style[sel] : null;
+    if (t.id === 'dzFont') { e.f = t.value; refreshEl(sel); }
+    else if (t.id === 'dzW') { e.w = +t.value; refreshEl(sel); }
+    else if (t.id === 'dzLf' && t.files[0]) { await loadLogo(t.files[0]); D.logo = logoData; renderBanner(); renderPanel(); }
+  });
+  P.addEventListener('click', ev => {
+    const tb = ev.target.closest('[data-tab]'); if (tb) { sel = tb.dataset.tab; markSel(); return renderPanel(); }
+    const sw = ev.target.closest('.sw'); if (sw && (sel === 't' || sel === 's')) { cur().c = sw.dataset.c; refreshEl(sel); return renderPanel(); }
+    if (ev.target.closest('#dzIt')) { cur().i = cur().i ? 0 : 1; refreshEl(sel); return renderPanel(); }
+    const ac = ev.target.closest('[data-act]'); if (!ac) return;
+    const a = ac.dataset.act;
+    if (a === 'inc' || a === 'dec') { const e = cur(); e.s = clamp(Math.round((e.s + (a === 'inc' ? .3 : -.3)) * 10) / 10, 1.5, 12); refreshEl(sel); renderPanel(); }
+    else if (a === 'cx') { cur().x = 50; refreshEl(sel); }
+    else if (a === 'cy') { cur().y = 50; refreshEl(sel); }
+    else if (a === 'rmlogo') { D.logo = ''; clearLogo(); sel = 'l'; renderBanner(); renderPanel(); }
+  });
+  d.querySelector('.dz-seg').addEventListener('click', ev => { const b = ev.target.closest('[data-v]'); if (b && b.dataset.v !== view) { view = b.dataset.v; renderStage(); } });
+
+  // --- phím mũi tên nhích 0.5% (Shift: 2%) ---
+  const onKey = ev => {
+    if (!$('dzov')) return;
+    if (ev.key === 'Escape') { if (!ev.defaultPrevented) cancel(); return; }
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key)) return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test((ev.target.tagName || '')) && ev.target.type !== 'range' || ev.target.isContentEditable) return;
+    if (sel === 'b') return;
+    ev.preventDefault(); const e = cur(), st = ev.shiftKey ? 2 : .5;
+    if (ev.key === 'ArrowLeft') e.x = clamp(e.x - st, 0, 100); if (ev.key === 'ArrowRight') e.x = clamp(e.x + st, 0, 100);
+    if (ev.key === 'ArrowUp') e.y = clamp(e.y - st, 0, 100); if (ev.key === 'ArrowDown') e.y = clamp(e.y + st, 0, 100);
+    e.x = Math.round(e.x * 10) / 10; e.y = Math.round(e.y * 10) / 10; refreshEl(sel);
   };
   document.addEventListener('keydown', onKey);
 
-  d.onclick = e => {
-    if (e.target.closest('#pvwSndBtn') || e.target.closest('#pvwCloseBtn')) return;
-    close();
+  // --- nhạc, mặc định, huỷ, lưu ---
+  const closeEd = () => {
+    document.removeEventListener('keydown', onKey); d.remove();
+    if (!prevPlaying && !bgm.paused && d._musicStarted) stopMusic();
+    if ($('smod')) $('smod').style.display = '';
   };
-
-  const sndBtn = d.querySelector('#pvwSndBtn');
-  if (sndBtn) {
-    sndBtn.onclick = e => {
-      e.stopPropagation();
-      if (bgm.paused) {
-        if (src && musicVal !== 'none') startMusic(src, volVal);
-        sndBtn.textContent = '🔊 Tắt nhạc';
-      } else {
-        stopMusic();
-        sndBtn.textContent = '🔇 Bật nhạc';
-      }
-    };
+  async function cancel() {
+    if (JSON.stringify(D) !== orig && !await ask('Thoát mà không lưu các thay đổi giao diện?', 'Thoát, bỏ thay đổi', 'Tiếp tục sửa')) return;
+    closeEd();
   }
-
-  const closeBtn = d.querySelector('#pvwCloseBtn');
-  if (closeBtn) {
-    closeBtn.onclick = e => {
-      e.stopPropagation();
-      close();
-    };
-  }
-
-  document.body.appendChild(d);
+  const snd = d.querySelector('#dzSnd');
+  if (snd) snd.onclick = () => { if (bgm.paused) { startMusic(msrc, volVal); d._musicStarted = true; snd.textContent = '🔊 Nhạc'; } else { stopMusic(); snd.textContent = '🔇 Nhạc'; } };
+  d.querySelector('#dzReset').onclick = async () => { if (await ask('Đặt lại vị trí, font, cỡ chữ và màu về mặc định?', 'Đặt lại', 'Giữ nguyên')) { D.style = DEF_STYLE(!!D.logo); renderBanner(); renderPanel(); } };
+  d.querySelector('#dzCancel').onclick = cancel;
+  d.querySelector('#dzSave').onclick = () => {
+    const set = (id, v) => { if ($(id)) $(id).value = v; };
+    set(px + 'bt', D.title); set(px + 'bs', D.sub); set(px + 'bc', D.color);
+    logoData = D.logo; try { if (logoData) localStorage.qb_logo = logoData; else localStorage.removeItem('qb_logo'); } catch {}
+    refreshLogo(); brandStyle = D.style;
+    try { localStorage.qb_brand = JSON.stringify({ ...JSON.parse(localStorage.qb_brand || '{}'), title: D.title, sub: D.sub, color: D.color, style: D.style }); } catch {}
+    closeEd();
+    if (inRoom) { saveRoomSettings(); if ($('smod')) $('smod').style.display = ''; }
+    else showToast(activeProfileId ? '✔ Đã lưu giao diện. Bấm "Cập nhật Profile" nếu muốn ghi vào profile đang dùng.' : '✔ Đã lưu giao diện — khi chơi thật sẽ hiện y như bản này.');
+  };
+  renderStage(); renderPanel();
 }
 function refreshBg() { if (!$('bgs')) return; $('bgs').innerHTML = bgData ? '✔ Đã chọn hình nền · <a href="#" style="color:#1368ce" onclick="clearBg();return false">xoá</a>' : 'Chưa chọn'; }
 function clearBg() { bgData = ''; localStorage.removeItem('qb_bg'); refreshBg(); }
@@ -1621,25 +1832,34 @@ s.on('hostoff', () => { if (role === 'player') { $('net').textContent = 'Host đ
 s.on('hoston', () => { if (role === 'player') $('net').style.display = 'none'; });
 s.on('disconnect', () => { if (role) $('net').style.display = 'block'; });
 let qEnd = 0;
+// Cho khối câu hỏi + khay đáp án chiếm vừa đủ chiều cao màn hình điện thoại
+function fitPQ() {
+  const pq = document.querySelector('.pq'); if (!pq) return;
+  pq.style.minHeight = Math.max(460, innerHeight - pq.getBoundingClientRect().top - window.scrollY) + 'px';
+}
+// Câu hỏi dài thì tự giảm cỡ chữ cho vừa khung (không nhỏ hơn ~19px)
+function fitQ() {
+  const box = document.querySelector('.pq-q'), c = document.querySelector('.pq-q .qcard'); if (!box || !c) return;
+  let fs = Math.min(46, Math.max(28, innerWidth * 0.09)), guard = 0; c.style.fontSize = fs + 'px';
+  while (c.scrollHeight > box.clientHeight + 1 && fs > 19 && guard++ < 40) { fs -= 1.5; c.style.fontSize = fs + 'px'; }
+}
+
 function drawQ(note) {
   removeGuideBtn();
   clearInterval(timer); const q = cur;
   const isHost = role === 'host';
-  const hasLongOpts = (q.options || []).some(o => (o || '').length > 25);
-  const gridCls = hasLongOpts ? 'grid long-opts' : 'grid';
-
-  const head = `
-    <div class="meta">
-      <span class="pill">Câu <b>${q.i}</b>/${q.total}</span>
-      <span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span>
-    </div>
-    <div class="tbar"><i id="tb" style="width:100%"></i></div>
-    <div class="qcard">${esc(q.q)}</div>
-  `;
 
   if (isHost) {
+    const head = `
+      <div class="meta">
+        <span class="pill">Câu <b>${q.i}</b>/${q.total}</span>
+        <span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span>
+      </div>
+      <div class="tbar"><i id="tb" style="width:100%"></i></div>
+      <div class="qcard">${esc(q.q)}</div>
+    `;
     h(head + `
-      <div class="${gridCls}">
+      <div class="grid">
         ${q.options.map((o, i) => `
           <div class="panel ans-panel" style="margin:0;background:${COL[i]}">
             <span class="ans-sym">${SYM[i]}</span>
@@ -1650,16 +1870,31 @@ function drawQ(note) {
       <div id="an" class="big" style="margin-top:16px;font-size:1.35rem">0 đã trả lời</div>
     `);
   } else if (role === 'player') {
-    h(head + (note ? `<div class="er" style="color:#ffd602;font-size:1.15rem;margin:8px 0">${esc(note)}</div>` : '') + `
-      <div class="${gridCls}">
-        ${q.options.map((o, i) => `
-          <button class="ans-btn" style="background:${COL[i]}" onpointerdown="vibrateTap(40)" onclick="ans(${i})">
-            <span class="ans-sym">${SYM[i]}</span>
-            <span class="ans-txt">${esc(o)}</span>
-          </button>
-        `).join('')}
+    h(`
+      <div class="pq">
+        <div class="pq-top">
+          <div class="meta">
+            <span class="pill">Câu <b>${q.i}</b>/${q.total}</span>
+            <span class="pill t">⏱ <b id="tm">${Math.max(Math.ceil((qEnd - Date.now()) / 1000), 0)}</b>s</span>
+          </div>
+          <div class="tbar"><i id="tb" style="width:100%"></i></div>
+        </div>
+        <div class="pq-q"><div class="qcard">${esc(q.q)}</div></div>
+        <div class="pq-sheet">
+          ${note ? `<div class="er" style="color:#ffd602;margin:0 0 8px;font-size:1.15rem">${esc(note)}</div>` : ''}
+          <div class="pq-hint">👇 Chọn đáp án</div>
+          <div class="pq-grid">
+            ${q.options.map((o, i) => `
+              <button class="ans-btn" style="background:${COL[i]}" onpointerdown="vibrateTap(40)" onclick="ans(${i})">
+                <span class="sy">${SYM[i]}</span>
+                <span class="tx">${esc(o)}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
       </div>
     `);
+    fitPQ(); fitQ();
   }
 
   timer = setInterval(() => {
@@ -1685,7 +1920,7 @@ function showSent() {
 
 function ans(i) {
   vibrateTap(45);
-  const btns = document.querySelectorAll('.grid button');
+  const btns = document.querySelectorAll('.grid button, .pq-grid button');
   btns.forEach((b, idx) => {
     b.disabled = true;
     if (idx === i) {
@@ -1862,6 +2097,8 @@ function csv() {
 s.on('closed', why => { localStorage.removeItem('qb'); role = ''; alert(why === 'cancel' ? 'Host đã hủy phòng này' : 'Host đã thoát phòng'); home(); });
 let saved = JSON.parse(localStorage.qb || 'null');
 if (saved && Date.now() - (saved.t || 0) > 6 * 3600e3) { localStorage.removeItem('qb'); saved = null; }
+const qrPin = new URLSearchParams(location.search).get('pin');
+if (saved && qrPin && qrPin !== saved.pin) { localStorage.removeItem('qb'); saved = null; }
 const savedH = JSON.parse(sessionStorage.qbh || 'null');
 if (saved) doJoin(saved.pin, saved.name, saved.token, true);
 else if (sessionStorage.qbp && savedH) { tok = sessionStorage.qbp; hostRejoin(savedH, true); }
