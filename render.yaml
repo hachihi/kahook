@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: quizblast
+    name: hchkahoot
     runtime: node
     plan: free
     buildCommand: npm install
