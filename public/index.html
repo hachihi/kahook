@@ -917,12 +917,16 @@ function lbAct(a) {
 }
 document.addEventListener('click', e => { const d = $('lbDd'); if (d && !d.hidden && !e.target.closest('.lb-menu')) d.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') lbMenu(false); });
-async function copyJoin() {
+
+  <!--
+  async function copyJoin() {
   const u = joinUrl(curPin);
   try { await navigator.clipboard.writeText(u); }
   catch { const t = document.createElement('textarea'); t.value = u; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
   const b = $('lbCopy'); if (b) { b.textContent = '✔ Đã sao chép'; setTimeout(() => { if ($('lbCopy')) $('lbCopy').textContent = '📋 Sao chép'; }, 1600); }
 }
+
+  -->
 function hostLobby(pin) {
   curPin = pin;
   cancelRoomBtn();
@@ -945,8 +949,9 @@ function hostLobby(pin) {
       <div class="lb-qr">${qr || '<div class="lb-qrfail">Link quá dài để tạo QR.<br>Hãy dùng link và mã PIN bên cạnh.</div>'}</div>
       <div class="lb-info">
         <div class="lb-lbl">📱 Quét QR hoặc mở link</div>
-     <!-- <div class="lb-link"><span class="lb-url">${esc(location.host)}</span><button id="lbCopy" class="lb-copy" onclick="copyJoin()">📋 Sao chép</button></div> -->
-        <div class="lb-link"><span class="lb-url" style="font-size: 2.4em;">http://kahoot.hachihi.vn</span><button id="lbCopy" class="lb-copy" onclick="copyJoin()">📋 Sao chép</button></div>        <div class="lb-lbl">🔑 Mã PIN</div>
+<div class="lb-link"><span class="lb-url">${esc(location.host)}</span>
+<!--<button id="lbCopy" class="lb-copy" onclick="copyJoin()">📋 Sao chép</button>-->
+</div>
         <div class="pin lb-pin">${esc(pin)}</div>
         <div class="lb-note">Người chơi nhập mã PIN và nhập tên.</div>
       <!-- ${local ? '<div class="lb-warn">⚠ Bạn đang mở bằng <b>localhost</b> nên điện thoại sẽ không vào được. Hãy mở trang host bằng địa chỉ IP của máy (ví dụ 192.168.x.x:3000) hoặc link trên mạng.</div>' : ''} -->
